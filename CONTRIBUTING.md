@@ -167,6 +167,57 @@ Coverage is reported for `src/api/client.ts`, `src/stores/authStore.ts`, `src/ho
 
 ---
 
+## Frontend Architecture Conventions
+
+These conventions keep the frontend navigable as it grows, and they are what reviewers hold a change to. They cover the `src/core/` and `src/variants/<name>/` trees, and the transitional `src/routes/`, `src/components/` and `src/api/` trees that are still being classified.
+
+### 1. Route modules become directories
+
+A route module that needs more than one file becomes a directory with an `index.tsx` entry point and its private parts beside it. Nothing under `src/routes/` or `src/variants/<name>/routes/` stays a set of flat sibling files once a module outgrows a single file.
+
+```
+src/routes/backup/
+  index.tsx
+  components/
+    RemoteRestoreModal.tsx
+    ScheduleCard.tsx
+    ScheduleModal.tsx
+```
+
+The module specifier used by `React.lazy` in `App.tsx` does not change when a file turns into a directory, so `@/routes/backup` keeps resolving through `index.tsx`.
+
+### 2. All HTTP goes through `src/api/`
+
+A component, hook or store never calls `fetch` directly and never builds an API URL by hand. Every request goes through the shared client, which owns the base path, the credentials mode and the response envelope.
+
+- One module per backend domain under `src/api/`.
+- Request and response types live next to the module that owns them, or in `shared/types.ts` when more than one module needs them.
+- A route that needs a new endpoint adds it to the domain module rather than inlining a call.
+
+### 3. Component ownership
+
+- A component reachable from more than one variant lives in `src/core/components/`.
+- A component reachable from exactly one variant lives in `src/variants/<name>/components/`.
+- `src/components/` holds what has not been classified yet. Moving one component into `core/` or into a variant is always a welcome standalone change.
+
+### 4. Single-file soft cap
+
+A module under `src/routes/`, `src/variants/<name>/routes/` or `src/core/` does not grow past 800 lines. The cap is a signal to split rather than a build failure, and a split has to hold the chunk count and keep the initial JS within 2 KB of where it started.
+
+### 5. i18n namespaces
+
+Translations are grouped by domain, not by screen. Each namespace maps to one domain (`common`, `settings`, `dashboard`, `users`) and a new key belongs to exactly one of them. Components read keys through `useI18n` and never inline user-facing text.
+
+### 6. Coverage threshold
+
+The coverage gate measures a whitelist of modules rather than the whole tree, and it fails below 70% for lines, branches, functions and statements on those modules. The whitelist grows in steps as modules are split, so a module joins the list in the change that makes it able to hold the threshold.
+
+### 7. Variant ownership
+
+`src/variants/<name>/` may import from `src/core/` and from nothing else. Behaviour shared by two variants belongs in `core/`; behaviour specific to one variant belongs under that variant. A variant importing another variant is a signal that the shared part has not been extracted yet.
+
+---
+
 ## Commit Conventions (Conventional Commits)
 
 The Conventional Commits convention is required for every commit of a pull request. The review bot reads every commit message and asks for a rewrite when one does not follow the convention or is not written in English, so a change of wording means a new commit rather than an edited history. This also makes generating CHANGELOGs and locating changes easier:
