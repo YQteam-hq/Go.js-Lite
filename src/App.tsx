@@ -8,6 +8,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import NotFound from '@/routes/NotFound'
 import { useCapabilities } from '@/hooks/useCapabilities'
 import { applyDocumentLanguage } from '@/lib/locale'
+import { activeVariant, variantManifests } from '@/variants/registry'
 import type { TranslationKey } from '@/hooks/useI18n'
 
 const Login = lazy(() => import('@/routes/Login'))
@@ -63,6 +64,9 @@ const PhpUpgrade = lazy(() => import('@/routes/PhpUpgrade'))
 const WebShell = lazy(() => import('@/routes/WebShell'))
 const WebsiteMonitor = lazy(() => import('@/routes/WebsiteMonitor'))
 const CustomErrorPages = lazy(() => import('@/routes/CustomErrorPages'))
+const StatusPage = lazy(() => import('@/routes/StatusPage'))
+
+const activeVariantRoutes = variantManifests[activeVariant].routes
 
 function RouteFallback() {
   return (
@@ -217,6 +221,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
         <Route path="/install" element={<Install />} />
+        <Route path="/status" element={<StatusPage />} />
         <Route path="/invite/:token" element={<InviteAccept />} />
         <Route
           path="/*"
@@ -270,6 +275,9 @@ export default function App() {
                     <Route path="website-monitor" element={<WebsiteMonitor />} />
                     <Route path="custom-error-pages" element={<CustomErrorPages />} />
                     <Route path="settings" element={<Settings />} />
+                    {activeVariantRoutes.map((entry) => (
+                      <Route key={entry.path} path={entry.path} element={<entry.component />} />
+                    ))}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
