@@ -17,7 +17,7 @@ export const filesApi = {
   list(path: string, sort = 'name', order: 'asc' | 'desc' = 'asc') {
     if (USE_MOCK) {
       return mockApi.listFiles(path).then((files) => {
-        let sorted = [...files]
+        const sorted = [...files]
         if (sort === 'name') {
           sorted.sort((a, b) => {
             const dirCompare = (b.type === 'dir' ? 1 : 0) - (a.type === 'dir' ? 1 : 0)

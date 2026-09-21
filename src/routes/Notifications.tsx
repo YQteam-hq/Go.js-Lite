@@ -98,7 +98,7 @@ export default function Notifications() {
     queryFn: () => notificationChannelsApi.list(),
   })
 
-  const items = data?.items ?? []
+  const items = useMemo(() => data?.items ?? [], [data])
   const total = data?.total ?? 0
   const unreadCount = data?.unread_count ?? summary?.unread ?? 0
   const countMapTotal = summary?.total ?? 0

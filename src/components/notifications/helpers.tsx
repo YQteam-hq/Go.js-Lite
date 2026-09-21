@@ -23,7 +23,7 @@ export function JsonTree({ data }: { data: unknown }) {
       return (
         <div style={indent} className="font-mono text-xs py-0.5 break-all">
           {typeof node === 'string' ? (
-            <span className="text-success">"{node}"</span>
+            <span className="text-success">&quot;{node}&quot;</span>
           ) : typeof node === 'number' ? (
             <span className="text-warning">{String(node)}</span>
           ) : typeof node === 'boolean' ? (

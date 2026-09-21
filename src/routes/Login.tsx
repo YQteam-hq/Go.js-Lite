@@ -30,13 +30,15 @@ export default function Login() {
   const navigate = useNavigate()
   const { installed, loading: bootstrapLoading, authenticated } = useAuthBootstrap()
 
+  const locked = lockCountdown > 0
+
   useEffect(() => {
-    if (lockCountdown <= 0) return
+    if (!locked) return
     const timer = setInterval(() => {
       setLockCountdown((prev) => (prev <= 1 ? 0 : prev - 1))
     }, 1000)
     return () => clearInterval(timer)
-  }, [lockCountdown > 0])
+  }, [locked])
 
   const formatCountdown = (seconds: number) => {
     const m = Math.floor(seconds / 60)
