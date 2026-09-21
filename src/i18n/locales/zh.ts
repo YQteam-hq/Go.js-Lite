@@ -675,6 +675,10 @@ const zh = {
     title: '设置',
     documentTitle: '设置 — Go.js',
     subtitle: '个性化与安全设置',
+    deprecationsTitle: '即将移除的功能',
+    deprecationsSubtitle: '目前仍可用，但已排定移除计划',
+    deprecationsRemoval: '计划在 {version} 中移除。',
+    deprecationsDocs: '查看弃用说明',
     theme: '主题',
     language: '语言',
     changePassword: '修改密码',
@@ -2302,6 +2306,12 @@ const zh = {
     thresholdWarning: '存储使用率已超过预警阈值。',
     thresholdCritical: '存储使用率已超过严重阈值。',
     usageValue: '已使用 {percent}%，共 {total}，已用 {used}',
+  },
+  variants: {
+    panel: 'Go.js-Panel',
+    apache: 'Go.js-Apache',
+    ssh: 'Go.js-SSH',
+    docker: 'Go.js-Docker',
   },
 }
 

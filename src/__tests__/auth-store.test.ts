@@ -42,6 +42,7 @@ const initialState = {
   user: null,
   backendVersion: '',
   frontendVersion: VERSION,
+  deprecations: [],
 };
 
 beforeEach(() => {
@@ -103,6 +104,41 @@ describe('useAuthStore', () => {
     expect(state.authenticated).toBe(false);
     expect(state.bootstrapped).toBe(true);
     expect(state.capabilities).toEqual(capabilities);
+  });
+
+  it('starts with no deprecations', () => {
+    expect(useAuthStore.getState().deprecations).toEqual([]);
+  });
+
+  it('keeps the deprecation notices the backend reports', () => {
+    useAuthStore.getState().setBootstrap({
+      ...bootstrap,
+      deprecations: {
+        query_api: {
+          id: 'query_api',
+          feature: 'Query-style API endpoint',
+          target: 'api.php?api=<action>',
+          replacement: '/api/<action>',
+          surfaces: ['api.php?api=<action>'],
+          deprecatedIn: '0.8.0',
+          removeIn: '1.0.0',
+          sunsetAt: '2027-06-30T00:00:00Z',
+          docs: 'docs/deprecations.md#query_api',
+          message: 'The ?api=<action> query form is deprecated.',
+          deprecated: true,
+        },
+      },
+    });
+
+    const state = useAuthStore.getState();
+    expect(state.deprecations).toHaveLength(1);
+    expect(state.deprecations[0].id).toBe('query_api');
+    expect(state.deprecations[0].removeIn).toBe('1.0.0');
+  });
+
+  it('reports no deprecations when the payload is absent', () => {
+    useAuthStore.getState().setBootstrap(bootstrap);
+    expect(useAuthStore.getState().deprecations).toEqual([]);
   });
 
   it('marks the bootstrap as failed without authenticating', () => {

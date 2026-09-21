@@ -677,6 +677,10 @@ const en: Translation = {
     title: 'Settings',
     documentTitle: 'Settings — Go.js',
     subtitle: 'Personalization & security',
+    deprecationsTitle: 'Deprecated features',
+    deprecationsSubtitle: 'Still available now, scheduled for removal',
+    deprecationsRemoval: 'Scheduled for removal in {version}.',
+    deprecationsDocs: 'Read the deprecation notes',
     theme: 'Theme',
     language: 'Language',
     changePassword: 'Change Password',
@@ -2304,6 +2308,12 @@ const en: Translation = {
     thresholdWarning: 'Storage usage is above the warning threshold.',
     thresholdCritical: 'Storage usage is above the critical threshold.',
     usageValue: '{percent}% used, {used} of {total}',
+  },
+  variants: {
+    panel: 'Go.js-Panel',
+    apache: 'Go.js-Apache',
+    ssh: 'Go.js-SSH',
+    docker: 'Go.js-Docker',
   },
 }
 
