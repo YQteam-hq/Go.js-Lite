@@ -78,6 +78,7 @@ Removal behaviour in 1.0.0:
 | `Link` | same | `Link: <docs/deprecations.md#query_api>; rel="deprecation"; type="text/markdown"` |
 | `X-Gojs-Deprecations` | same, lists every id hit by the request | `X-Gojs-Deprecations: query_api` |
 | `deprecations` | `GET /api/bootstrap` response body | object keyed by id, one notice per entry |
+| `deprecations` | `GET /api/upgrade/check` response body | object with `count`, `ids` and one notice per entry |
 | `deprecated`, `removeIn`, `replacement` | `POST /api/regenerate-access-token` response body | `true`, `1.0.0`, `tokens` |
 
 ---
@@ -91,11 +92,11 @@ Removal behaviour in 1.0.0:
 | Frozen | 0.9.9 | 2027-Q1 | Last release that accepts the deprecated surfaces. New code must not use them. |
 | Removed | 1.0.0 | 2027-06-30 or later | The surfaces listed above stop working. `docs/migration-0.9-to-1.0.md` ships the exact replacement steps. |
 
-> Status note: the notice is currently emitted on the wire only - the response headers listed under
-> "Runtime signals" and the `deprecations` field of `GET /api/bootstrap`. The rest of the Warn
-> milestone, repeating the notice in the login and settings surfaces and in the upgrade report, is
-> still outstanding. Nothing breaks either way; a caller can already detect the deprecated surface
-> from the headers alone.
+> Status note: the notice is emitted on the wire - the response headers listed under "Runtime signals"
+> and the `deprecations` field of `GET /api/bootstrap` - and it is repeated in the upgrade report
+> returned by `GET /api/upgrade/check`. The remaining part of the Warn milestone, repeating the notice
+> in the login and settings surfaces, is still outstanding. Nothing breaks either way; a caller can
+> already detect the deprecated surface from the headers alone.
 
 The sunset date is the earliest removal date, not a promise: 1.0.0 ships when the
 timeline above is complete, which may be later than 2027-06-30.
