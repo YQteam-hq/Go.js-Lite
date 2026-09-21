@@ -12,7 +12,7 @@
 
 ---
 
-## What's new in 0.9.0 (unreleased)
+## What's new in 1.0.0 (unreleased)
 
 - **Two-factor authentication** — per-user TOTP, with eight single-use recovery codes issued at enrolment and a code challenge at login. See [docs/mfa.md](docs/mfa.md).
 - **Hardened uploads** — filenames are validated before the file is written, and active SVG is refused unless it is explicitly allowed.
@@ -21,7 +21,7 @@
 - **Response header policy** — one place to add, override or disable the security headers, including the Content-Security-Policy.
 - **Documented scheduling** — the three layers that run recurring work, and how to drive them from `webcron.php` when the host gives you no shell. See [docs/scheduled-tasks.md](docs/scheduled-tasks.md).
 
-Upgrading from 0.8.x: [docs/migration-0.8-to-0.9.md](docs/migration-0.8-to-0.9.md) describes each behavioural change and the configuration keys that control it.
+Upgrading from 0.8.x: [docs/migration-0.8-to-1.0.md](docs/migration-0.8-to-1.0.md) describes each behavioural change and the configuration keys that control it.
 
 ---
 
@@ -246,7 +246,7 @@ Both forms end up at the same `api.php` action handler — there is only one cod
 | [docs/api.md](docs/api.md) | The backend API reference: conventions, the endpoint overview table and a reference entry per endpoint. |
 | [docs/deprecations.md](docs/deprecations.md) | What is deprecated, how it is announced at runtime, and the 1.0.0 removal schedule. |
 | [docs/migration-0.7-to-0.8.md](docs/migration-0.7-to-0.8.md) | Upgrading from the single-admin panel to multi-user. |
-| [docs/migration-0.8-to-0.9.md](docs/migration-0.8-to-0.9.md) | Upgrading to the hardened 0.9.0 release: uploads, session binding, backup verification and response headers. |
+| [docs/migration-0.8-to-1.0.md](docs/migration-0.8-to-1.0.md) | Upgrading to the hardened 1.0.0 release: uploads, session binding, backup verification and response headers. |
 | [docs/scheduled-tasks.md](docs/scheduled-tasks.md) | Running recurring work through the system crontab or, without shell access, through `webcron.php`. |
 | [docs/mfa.md](docs/mfa.md) | Per-user two-factor authentication: enrolment, the login challenge and recovery codes. |
 | [docs/database-query-builder.md](docs/database-query-builder.md) | Building and running queries from the panel, and what the preview endpoint actually does. |

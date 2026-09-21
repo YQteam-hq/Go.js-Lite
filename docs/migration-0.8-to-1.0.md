@@ -1,6 +1,6 @@
-# Migrating 0.8.x → 0.9.0
+# Migrating 0.8.x → 1.0.0
 
-0.9.0 is a hardening release. It changes what the panel accepts and how it treats an authenticated
+1.0.0 is a hardening release. It changes what the panel accepts and how it treats an authenticated
 session, and it adds a public status page, but it does not change the on-disk layout of `.gojs/` and
 it does not remove any endpoint. Upgrading is still an overwrite of the `gojs/` folder.
 
@@ -24,7 +24,7 @@ one of them can sign users out.
 ## Uploads are validated before the file is written (behaviour change)
 
 0.8.x decided what an upload was from the client-supplied name and a four-pattern scan of the first
-4 KiB. 0.9.0 runs `backend/upload_guard.php` from both `upload` and `upload-chunk` and rejects a
+4 KiB. 1.0.0 runs `backend/upload_guard.php` from both `upload` and `upload-chunk` and rejects a
 request before anything reaches the disk.
 
 Rejected by default:
@@ -58,7 +58,7 @@ recommended way to stage the change on a busy instance.
 ## Sessions are bound to the client (behaviour change, can sign users out)
 
 0.8.x recorded `login_ip` and `login_ua` at sign-in and never checked them again, so a copied session
-cookie worked from anywhere. 0.9.0 derives a fingerprint from the client signals plus a random
+cookie worked from anywhere. 1.0.0 derives a fingerprint from the client signals plus a random
 per-session salt and compares it on every authenticated request.
 
 - Default signals: `ip` (the /24 prefix on IPv4, the first three hextets on IPv6), `ua` and `lang`
@@ -91,7 +91,7 @@ is the polite way to move a user to a new network without forcing a sign-out.
   the finished archive is written to `<CONFIG_DIR>/backups/<filename>.sha256` and returned by the API
   as `sha256`.
 - `backup/verify` recomputes every entry hash and reports `mismatched`, `missing` and `extra`
-  entries. An archive written before 0.9.0 has no manifest and is reported with `legacy` set.
+  entries. An archive written before 1.0.0 has no manifest and is reported with `legacy` set.
 - `backup/precheck` runs the verification and then checks the restore target: the `backup.json`
   metadata entry, parent directory segments in entry names, files root availability and writability,
   free space against the uncompressed footprint.
@@ -144,9 +144,9 @@ other unauthenticated path.
 
 ## Deprecations enter their warning stage
 
-0.9.0 is the **warn** milestone of the schedule in [deprecations.md](deprecations.md). Nothing is
-removed and nothing breaks; the two legacy surfaces below keep working until 1.0.0, and are frozen
-in 0.9.9.
+The schedule in [deprecations.md](deprecations.md) puts the **warn** milestone at 0.8.2 and the freeze at
+1.0.0-rc.1. Nothing is removed and nothing breaks in this release; the two legacy surfaces below keep
+working until 1.0.0.
 
 | Deprecated | Replacement | Removed in |
 |---|---|---|
@@ -162,6 +162,46 @@ curl -sS -D- -o /dev/null 'https://panel.example/gojs/api/bootstrap?token=REDACT
 
 A non-empty result means the caller is on a deprecated surface. `GET /api/bootstrap` returns the
 same information in its `deprecations` field.
+
+### What the affected calls look like, and what to use instead
+
+The `?api=<action>` query form:
+
+```http
+POST /gojs/api.php?api=file-save&path=/public_html/index.html
+GET  /gojs/api.php?api=files&path=/public_html
+```
+
+The path form reaches the same handler, so the move is a URL change only:
+
+```http
+POST /gojs/api/file-save
+GET  /gojs/api/files?path=/public_html
+```
+
+The legacy access token, in all three of its forms:
+
+```http
+GET /gojs/api.php?api=files&path=/public_html&token=REDACTED
+GET /gojs/api/files?path=/public_html
+X-Access-Token: REDACTED
+POST /gojs/api/regenerate-access-token
+```
+
+Create a scoped API token once with `POST /api/tokens`, then send it as a header on every request:
+
+```http
+GET /gojs/api/files?path=/public_html
+X-API-Token: <scoped token>
+```
+
+```http
+GET /gojs/api/files?path=/public_html
+Authorization: Bearer <scoped token>
+```
+
+The `access_token` key in `config.php` is removed together with the rest of the surface; a scoped
+token is stored in the panel and can be revoked per token, which the single shared secret could not.
 
 > Note: in this release the notice is only emitted on the wire (headers and the bootstrap payload).
 > It is not yet repeated in the login or settings screens, so nobody will be warned in the UI.
@@ -194,4 +234,4 @@ documented in [api.md](api.md).
 
 Overwrite the folder with the 0.8.x build again. The `.gojs/` directory is not converted, so no data
 step is needed. Two things stay behind and are harmless: the `.sha256` sidecars next to newer backups,
-and the `manifest.json` entry inside archives created by 0.9.0.
+and the `manifest.json` entry inside archives created by 1.0.0.

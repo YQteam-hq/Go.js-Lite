@@ -87,9 +87,9 @@ Removal behaviour in 1.0.0:
 | Milestone | Release | Date | What changes |
 | --- | --- | --- | --- |
 | Announced | 0.8.0 | 2026-09-17 | Deprecation headers and the `deprecations` bootstrap payload go live, this file and `docs/api.md` are updated. Nothing breaks. |
-| Warn | 0.9.0 | 2026-Q4 | The notice is repeated in the operator-facing login/settings surfaces and in the upgrade report. Still nothing breaks. |
-| Frozen | 0.9.9 | 2027-Q1 | Last release that accepts the deprecated surfaces. New code must not use them. |
-| Removed | 1.0.0 | 2027-06-30 or later | The surfaces listed above stop working. `docs/migration-0.9-to-1.0.md` ships the exact replacement steps. |
+| Warn | 0.8.2 | 2026-Q4 | The notice is repeated in the operator-facing login/settings surfaces and in the upgrade report. Still nothing breaks. |
+| Frozen | 1.0.0-rc.1 | 2027-Q1 | Last release that accepts the deprecated surfaces. New code must not use them. |
+| Removed | 1.0.0 | 2027-06-30 or later | The surfaces listed above stop working. `docs/migration-0.8-to-1.0.md` ships the exact replacement steps. |
 
 > Status note: the notice is currently emitted on the wire only - the response headers listed under
 > "Runtime signals" and the `deprecations` field of `GET /api/bootstrap`. The rest of the Warn

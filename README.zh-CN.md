@@ -12,7 +12,7 @@
 
 ---
 
-## 0.9.0 有什么新东西（未发布）
+## 1.0.0 有什么新东西（未发布）
 
 - **双因素认证** — 按用户启用 TOTP，注册时一次性发放 8 个恢复码，登录时校验动态口令。详见 [docs/mfa.md](docs/mfa.md)。
 - **上传加固** — 文件名在落盘之前先做校验；除非显式放行，否则拒绝可执行的 SVG。
@@ -21,7 +21,7 @@
 - **响应头策略** — 集中管理安全响应头（含 Content-Security-Policy），可新增、覆盖或关闭。
 - **调度文档** — 说明运行周期性任务的三个层次，以及主机不提供 shell 时如何用 `webcron.php` 驱动。详见 [docs/scheduled-tasks.md](docs/scheduled-tasks.md)。
 
-从 0.8.x 升级：[docs/migration-0.8-to-0.9.md](docs/migration-0.8-to-0.9.md) 逐项说明行为变更及其对应的配置项。
+从 0.8.x 升级：[docs/migration-0.8-to-1.0.md](docs/migration-0.8-to-1.0.md) 逐项说明行为变更及其对应的配置项。
 
 ---
 
@@ -246,7 +246,7 @@ opcache.max_accelerated_files = 10000 ; 足够的缓存槽位
 | [docs/api.md](docs/api.md) | 后端 API 参考：约定、端点总览表，以及每个端点的参考条目。 |
 | [docs/deprecations.md](docs/deprecations.md) | 已弃用的内容、运行时的告知方式，以及 1.0.0 的移除时间表。 |
 | [docs/migration-0.7-to-0.8.md](docs/migration-0.7-to-0.8.md) | 从单管理员面板升级到多用户。 |
-| [docs/migration-0.8-to-0.9.md](docs/migration-0.8-to-0.9.md) | 升级到加固后的 0.9.0：上传、会话绑定、备份校验与响应头。 |
+| [docs/migration-0.8-to-1.0.md](docs/migration-0.8-to-1.0.md) | 升级到加固后的 1.0.0：上传、会话绑定、备份校验与响应头。 |
 | [docs/scheduled-tasks.md](docs/scheduled-tasks.md) | 通过系统 crontab、或在没有 shell 时通过 `webcron.php` 运行周期性任务。 |
 | [docs/mfa.md](docs/mfa.md) | 按用户的双因素认证：注册、登录校验与恢复码。 |
 | [docs/database-query-builder.md](docs/database-query-builder.md) | 在面板里构建并执行查询，以及预览端点实际做了什么。 |
