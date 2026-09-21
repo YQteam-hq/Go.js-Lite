@@ -7,65 +7,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Badge } from '@/components/ui/Badge'
 import { Eye, RotateCcw, Code, EyeOff, Save } from 'lucide-react'
 import { useI18n } from '@/hooks/useI18n'
-
-interface ErrorTemplate {
-  error_code: string
-  title: string
-  content: string
-  updated_at?: number
-}
-
-interface ErrorPageConfig {
-  templates: Record<string, ErrorTemplate>
-}
+import { customErrorPagesApi, type ErrorTemplateInput } from '@/api/customErrorPages'
 
 export default function CustomErrorPages() {
   const { t } = useI18n()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<'403' | '404' | '500'>('403')
-  const [editingTemplate, setEditingTemplate] = useState<{
-    error_code: string
-    title: string
-    content: string
-  } | null>(null)
+  const [editingTemplate, setEditingTemplate] = useState<ErrorTemplateInput | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [previewContent, setPreviewContent] = useState('')
 
-  const { data: templates, isLoading } = useQuery<ErrorPageConfig>({
+  const { data: templates, isLoading } = useQuery({
     queryKey: ['custom-error-pages'],
-    queryFn: async () => {
-      const response = await fetch('/api/custom-error-pages/config')
-      if (!response.ok) throw new Error('Failed to load templates')
-      return response.json()
-    }
+    queryFn: () => customErrorPagesApi.config(),
   })
 
   const updateTemplateMutation = useMutation({
-    mutationFn: async (data: { error_code: string; title: string; content: string }) => {
-      const currentTemplates = templates?.templates || {}
-
-      if (!currentTemplates[data.error_code]) {
-        const initResponse = await fetch('/api/custom-error-pages/template', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            error_code: data.error_code,
-            title: data.title,
-            content: data.content
-          })
-        })
-        if (!initResponse.ok) throw new Error('Failed to initialize template')
-        return initResponse.json()
-      }
-
-      const response = await fetch('/api/custom-error-pages/template', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-      if (!response.ok) throw new Error('Failed to update template')
-      return response.json()
-    },
+    mutationFn: (data: ErrorTemplateInput) => customErrorPagesApi.saveTemplate(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-error-pages'] })
       setEditingTemplate(null)
@@ -73,15 +31,7 @@ export default function CustomErrorPages() {
   })
 
   const resetTemplateMutation = useMutation({
-    mutationFn: async (error_code: string) => {
-      const response = await fetch(`/api/custom-error-pages/reset-template`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error_code })
-    })
-      if (!response.ok) throw new Error('Failed to reset template')
-      return response.json()
-    },
+    mutationFn: (error_code: string) => customErrorPagesApi.resetTemplate(error_code),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-error-pages'] })
     }
@@ -271,7 +221,7 @@ export default function CustomErrorPages() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">403</span>
-                    {(templates.templates as any)['403']?.updated_at && (
+                    {(templates.templates)['403']?.updated_at && (
                       <Badge variant="accent" className="text-xs">
                         {t('customErrorPages.customized')}
                       </Badge>
@@ -280,10 +230,10 @@ export default function CustomErrorPages() {
                   <div className="border rounded-lg overflow-hidden">
                     <div
                       className="w-full h-96 bg-white"
-                      dangerouslySetInnerHTML={{ __html: (templates.templates as any)['403']?.content || '' }}
+                      dangerouslySetInnerHTML={{ __html: (templates.templates)['403']?.content || '' }}
                     />
                     <div className="p-3 bg-muted text-sm text-muted-foreground">
-                      {t('customErrorPages.lastUpdated')}: {new Date((templates.templates as any)['403']?.updated_at || 0).toLocaleString()}
+                      {t('customErrorPages.lastUpdated')}: {new Date((templates.templates)['403']?.updated_at || 0).toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -333,7 +283,7 @@ export default function CustomErrorPages() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">404</span>
-                    {(templates.templates as any)['404']?.updated_at && (
+                    {(templates.templates)['404']?.updated_at && (
                       <Badge variant="accent" className="text-xs">
                         {t('customErrorPages.customized')}
                       </Badge>
@@ -342,10 +292,10 @@ export default function CustomErrorPages() {
                   <div className="border rounded-lg overflow-hidden">
                     <div
                       className="w-full h-96 bg-white"
-                      dangerouslySetInnerHTML={{ __html: (templates.templates as any)['404']?.content || '' }}
+                      dangerouslySetInnerHTML={{ __html: (templates.templates)['404']?.content || '' }}
                     />
                     <div className="p-3 bg-muted text-sm text-muted-foreground">
-                      {t('customErrorPages.lastUpdated')}: {new Date((templates.templates as any)['404']?.updated_at || 0).toLocaleString()}
+                      {t('customErrorPages.lastUpdated')}: {new Date((templates.templates)['404']?.updated_at || 0).toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -395,7 +345,7 @@ export default function CustomErrorPages() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">500</span>
-                    {(templates.templates as any)['500']?.updated_at && (
+                    {(templates.templates)['500']?.updated_at && (
                       <Badge variant="accent" className="text-xs">
                         {t('customErrorPages.customized')}
                       </Badge>
@@ -404,10 +354,10 @@ export default function CustomErrorPages() {
                   <div className="border rounded-lg overflow-hidden">
                     <div
                       className="w-full h-96 bg-white"
-                      dangerouslySetInnerHTML={{ __html: (templates.templates as any)['500']?.content || '' }}
+                      dangerouslySetInnerHTML={{ __html: (templates.templates)['500']?.content || '' }}
                     />
                     <div className="p-3 bg-muted text-sm text-muted-foreground">
-                      {t('customErrorPages.lastUpdated')}: {new Date((templates.templates as any)['500']?.updated_at || 0).toLocaleString()}
+                      {t('customErrorPages.lastUpdated')}: {new Date((templates.templates)['500']?.updated_at || 0).toLocaleString()}
                     </div>
                   </div>
                 </div>

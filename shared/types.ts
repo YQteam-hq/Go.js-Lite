@@ -26,6 +26,20 @@ export interface Capabilities {
   ftp?: boolean
 }
 
+export interface DeprecationNotice {
+  id: string
+  feature: string
+  target: string
+  replacement: string
+  surfaces: string[]
+  deprecatedIn: string
+  removeIn: string
+  sunsetAt: string
+  docs: string
+  message: string
+  deprecated: boolean
+}
+
 export interface BootstrapData {
   authenticated: boolean
   installed: boolean
@@ -41,6 +55,7 @@ export interface BootstrapData {
   }
   settings?: UserSettings
   accessToken?: string
+  deprecations?: DeprecationNotice[] | Record<string, DeprecationNotice>
 }
 
 export interface UserSettings {
@@ -513,7 +528,7 @@ export interface BackupRunRecord { id:string; schedule_id:string; started_at:num
 export interface OperationLogAlertRule { id:string; name:string; enabled:boolean; when:{ action_in?:string[]; action_not_in?:string[]; ip_not_in_whitelist?:boolean; outside_hours_range?:string; consecutive_fail_login_gt_N?:number }; then:{ channel_ids:string[]; severity:'info'|'warning'|'critical' } }
 export type NotificationChannelType = 'email'|'smtp'|'webhook';
 export interface NotificationChannelBase { id:string; name:string; enabled:boolean; type:NotificationChannelType; created_at:number }
-export interface NotificationChannelMail extends NotificationChannelBase { type:'email'; from_addr?:string; }
+export interface NotificationChannelMail extends NotificationChannelBase { type:'email'; from_addr?:string; to_addr?:string; }
 export interface NotificationChannelSmtp extends NotificationChannelBase { type:'smtp'; host:string; port:number; username?:string; password_enc?:string; from_addr:string; use_tls?:boolean }
 export interface NotificationChannelWebhook extends NotificationChannelBase { type:'webhook'; url:string; method?:'POST'|'PUT'; headers_enc?:string }
 export type NotificationChannel = NotificationChannelMail | NotificationChannelSmtp | NotificationChannelWebhook;
