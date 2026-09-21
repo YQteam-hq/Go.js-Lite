@@ -178,4 +178,45 @@ class DeprecationsTest extends TestCase
 
         $this->assertSame(array(), gojs_deprecation_emitted());
     }
+
+    public function testUpgradeReportCarriesEveryDeprecationNotice(): void
+    {
+        $report = gojs_upgrade_deprecation_report();
+
+        $this->assertSame(2, $report['count']);
+        $this->assertSame(array('query_api', 'legacy_access_token'), $report['ids']);
+        $this->assertSame(gojs_deprecation_payload(), $report['notices']);
+    }
+
+    public function testUpgradeReportRepeatsTheRemovalScheduleOfEachEntry(): void
+    {
+        $report = gojs_upgrade_deprecation_report();
+
+        foreach (gojs_deprecation_registry() as $id => $entry) {
+            $notice = $report['notices'][$id];
+
+            $this->assertSame($entry['feature'], $notice['feature'], $id);
+            $this->assertSame($entry['target'], $notice['target'], $id);
+            $this->assertSame($entry['replacement'], $notice['replacement'], $id);
+            $this->assertSame('1.0.0', $notice['removeIn'], $id);
+            $this->assertTrue($notice['deprecated'], $id);
+        }
+    }
+
+    public function testUpgradeReportAttachmentKeepsTheCheckResultIntact(): void
+    {
+        $check = array(
+            'checked_at' => 1700000000,
+            'latest_version' => '1.0.0',
+            'current_version' => '0.8.0',
+            'update_available' => true,
+        );
+
+        $report = gojs_upgrade_report_with_deprecations($check);
+
+        $this->assertSame(1700000000, $report['checked_at']);
+        $this->assertSame('1.0.0', $report['latest_version']);
+        $this->assertTrue($report['update_available']);
+        $this->assertSame(gojs_upgrade_deprecation_report(), $report['deprecations']);
+    }
 }
