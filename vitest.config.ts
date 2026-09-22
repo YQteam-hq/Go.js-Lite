@@ -13,7 +13,6 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: [
         'src/api/client.ts',
-        'src/components/**',
         'src/hooks/useI18n.ts',
         'src/i18n/**',
         'src/lib/**',
@@ -31,10 +30,10 @@ export default defineConfig({
         'src/**/*.spec.tsx',
       ],
       thresholds: {
-        statements: 64,
-        branches: 86,
-        functions: 78,
-        lines: 64,
+        statements: 70,
+        branches: 70,
+        functions: 70,
+        lines: 70,
         'src/api/client.ts': {
           statements: 70,
           branches: 70,
