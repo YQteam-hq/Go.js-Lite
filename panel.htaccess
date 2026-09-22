@@ -1,0 +1,76 @@
+DirectoryIndex dist/index.html index.html
+
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
+<LimitExcept GET HEAD OPTIONS POST>
+    Require all denied
+</LimitExcept>
+
+<Files ".htaccess">
+    Require all denied
+</Files>
+
+<Files "config.php">
+    Require all denied
+</Files>
+
+<FilesMatch "^\.gojs">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "\.(log|md)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "db_connections\.json$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule (^|/)\.gojs(/|$) - [F,L]
+
+    RewriteRule ^(backend|apps|tests|husky|shared|scripts)/ - [F,L]
+
+    RewriteRule ^(router|phpunit)\.php$ - [F,L]
+
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^assets/(.*)$ dist/assets/$1 [L]
+
+    RewriteRule ^api/(.*)$ api.php?api=$1 [QSA,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !/dist/
+    RewriteCond %{REQUEST_URI} !^.*\.(php|phtml|phar|inc)$ [NC]
+    RewriteRule ^ dist/index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    <FilesMatch "\.php$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_log .gojs/php_errors.log
+    php_flag expose_php Off
+    php_flag allow_url_include Off
+</IfModule>

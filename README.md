@@ -251,6 +251,7 @@ Both forms end up at the same `api.php` action handler — there is only one cod
 | [docs/mfa.md](docs/mfa.md) | Per-user two-factor authentication: enrolment, the login challenge and recovery codes. |
 | [docs/database-query-builder.md](docs/database-query-builder.md) | Building and running queries from the panel, and what the preview endpoint actually does. |
 | [docs/waf_integration.md](docs/waf_integration.md) | The Web Application Firewall rules, modes and integration points. |
+| [docs/variant-templates.md](docs/variant-templates.md) | The per-variant Apache templates, the method contract for the read-only panel, and how they differ from the root `.htaccess`. |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development workflow, the language policy and the gates a pull request has to pass. |
 
 ---
