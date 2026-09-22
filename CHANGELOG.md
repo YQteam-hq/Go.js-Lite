@@ -5,6 +5,8 @@
 
 ## [1.0.0] - Unreleased
 
+*The 0.9 line was cancelled; 1.0.0 absorbs every entry originally planned for 0.9.0.*
+
 Hardening for uploads, sessions, response headers and backup archives, alongside frontend performance, offline and accessibility work. No surface is removed: the two deprecated surfaces below keep working and are scheduled for removal in 1.0.0.
 
 ### Added
