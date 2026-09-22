@@ -1,6 +1,6 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { selectLanguage, useUiStore } from '@/stores/uiStore'
-import { locales } from '@/i18n'
+import { getLocale, isLocaleLoaded, loadLocale } from '@/i18n'
 import type { Translation, LocaleKey } from '@/i18n'
 
 type DeepPath<T, Prefix extends string = ''> = T extends object
@@ -40,10 +40,26 @@ function interpolate(text: string, params?: Record<string, string | number>): st
 export function useI18n() {
   const language = useUiStore(selectLanguage)
   const setLanguage = useUiStore((s) => s.setLanguage)
+  const [localeTick, bumpLocale] = useReducer((n: number) => n + 1, 0)
+
+  useEffect(() => {
+    const key = language as LocaleKey
+    if (isLocaleLoaded(key)) return
+    let alive = true
+    void loadLocale(key)
+      .then(() => {
+        if (alive) bumpLocale()
+      })
+      .catch(() => undefined)
+    return () => {
+      alive = false
+    }
+  }, [language])
 
   const currentLocale = useMemo(() => {
-    return locales[language as LocaleKey] ?? locales.zh
-  }, [language])
+    void localeTick
+    return getLocale(language as LocaleKey)
+  }, [language, localeTick])
 
   const hasKey = useCallback(
     (key: string): boolean => {
