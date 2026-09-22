@@ -107,6 +107,22 @@ function gojs_upgrade_lock_release() {
     @unlink(CONFIG_DIR . '/upgrade.lock');
 }
 
+function gojs_upgrade_deprecation_report() {
+    $notices = gojs_deprecation_payload();
+
+    return array(
+        'count' => count($notices),
+        'ids' => array_keys($notices),
+        'notices' => $notices,
+    );
+}
+
+function gojs_upgrade_report_with_deprecations(array $report) {
+    $report['deprecations'] = gojs_upgrade_deprecation_report();
+
+    return $report;
+}
+
 function gojs_upgrade_check() {
     global $config;
 
@@ -144,7 +160,7 @@ function gojs_upgrade_check() {
     }
 
     $update_available = version_compare($latest, APP_VERSION, '>');
-    $check_result = array(
+    $check_result = gojs_upgrade_report_with_deprecations(array(
         'checked_at' => time(),
         'latest_version' => $latest,
         'current_version' => APP_VERSION,
@@ -153,7 +169,7 @@ function gojs_upgrade_check() {
         'published_at' => isset($data['published_at']) ? (string)$data['published_at'] : '',
         'asset_url' => $asset_url,
         'asset_size' => $asset_size,
-    );
+    ));
 
     if (!isset($config['upgrade']) || !is_array($config['upgrade'])) {
         $config['upgrade'] = array();

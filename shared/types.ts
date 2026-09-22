@@ -26,20 +26,6 @@ export interface Capabilities {
   ftp?: boolean
 }
 
-export interface DeprecationNotice {
-  id: string
-  feature: string
-  target: string
-  replacement: string
-  surfaces: string[]
-  deprecatedIn: string
-  removeIn: string
-  sunsetAt: string
-  docs: string
-  message: string
-  deprecated: boolean
-}
-
 export interface BootstrapData {
   authenticated: boolean
   installed: boolean
@@ -788,6 +774,26 @@ export interface WebcronHistoryResult {
   history: WebcronHistoryEntry[];
 }
 
+export interface DeprecationNotice {
+  id: string;
+  feature: string;
+  target: string;
+  replacement: string;
+  surfaces: string[];
+  deprecatedIn: string;
+  removeIn: string;
+  sunsetAt: string;
+  docs: string;
+  message: string;
+  deprecated: boolean;
+}
+
+export interface UpgradeDeprecationReport {
+  count: number;
+  ids: string[];
+  notices: Record<string, DeprecationNotice>;
+}
+
 export interface UpgradeCheckResult {
   checked_at: number;
   current_version: string;
@@ -797,6 +803,7 @@ export interface UpgradeCheckResult {
   published_at?: string;
   asset_url?: string;
   asset_size?: number;
+  deprecations?: UpgradeDeprecationReport;
   error_key?: string;
   error_message?: string;
 }
