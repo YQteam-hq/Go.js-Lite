@@ -4,6 +4,9 @@ use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../backend/waf.php';
 
+/**
+ * @requires OSFAMILY Linux
+ */
 class WafTest extends TestCase
 {
     private $testIp = '192.168.1.100';
