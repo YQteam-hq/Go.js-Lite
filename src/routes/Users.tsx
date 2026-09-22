@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonTable } from '@/components/ui/Skeleton'
 import { AvatarBadge } from '@/components/ui/AvatarBadge'
 import { toast } from '@/components/ui/Toast'
-import { usersApi, type UserRecord, type UserRole } from '@/api/users'
+import { usersApi, type UserRecord, type UserRole, type UpdateUserInput } from '@/api/users'
 import { useFormat } from '@/lib/format'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
@@ -80,7 +80,7 @@ export default function Users() {
   const updateMutation = useMutation({
     mutationFn: () => {
       if (!editing) return Promise.reject(new Error('no target'))
-      const payload: any = {
+      const payload: UpdateUserInput = {
         username: editForm.username.trim(),
         role: editForm.role,
         path_allowlist: editForm.path_allowlist.split('\n').map(s => s.trim()).filter(Boolean),

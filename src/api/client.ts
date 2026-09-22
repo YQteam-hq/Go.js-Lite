@@ -5,10 +5,39 @@ export type ApiResponseType = 'json' | 'text' | 'blob'
 export interface ApiFetchOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   headers?: Record<string, string>
-  body?: any
+  body?: unknown
   signal?: AbortSignal
   params?: Record<string, string | number | boolean | null | undefined>
   responseType?: ApiResponseType
+}
+
+function isPassThroughBody(value: unknown): value is Blob | ArrayBuffer | FormData {
+  return value instanceof FormData || value instanceof Blob || value instanceof ArrayBuffer
+}
+
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null
+}
+
+function readErrorFields(error: unknown): { code?: string; message?: string } {
+  if (typeof error === 'string') {
+    return { code: error, message: error }
+  }
+  const record = readRecord(error)
+  if (!record) {
+    return {}
+  }
+  return {
+    code: typeof record.code === 'string' ? record.code : undefined,
+    message: typeof record.message === 'string' ? record.message : undefined,
+  }
+}
+
+function readRetryAfter(value: unknown): number | undefined {
+  const record = readRecord(value)
+  if (!record) return undefined
+  const retry = record.retryAfter ?? record.retry_after
+  return typeof retry === 'number' && Number.isFinite(retry) ? retry : undefined
 }
 
 export async function apiFetch<T = unknown>(
@@ -23,12 +52,8 @@ export async function apiFetch<T = unknown>(
 
   let body: BodyInit | undefined
   if (options.body !== undefined) {
-    if (
-      options.body instanceof FormData ||
-      options.body instanceof Blob ||
-      options.body instanceof ArrayBuffer
-    ) {
-      body = options.body as any
+    if (isPassThroughBody(options.body)) {
+      body = options.body
     } else {
       headers['Content-Type'] = headers['Content-Type'] || 'application/json'
       body = JSON.stringify(options.body)
@@ -60,7 +85,7 @@ export async function apiFetch<T = unknown>(
 
   if (!res.ok) {
     const text = await res.text()
-    let errBody: any = null
+    let errBody: unknown = null
     try {
       errBody = text ? JSON.parse(text) : null
     } catch {
@@ -83,25 +108,31 @@ export async function apiFetch<T = unknown>(
     return undefined as unknown as T
   }
 
-  let data: any = null
+  let data: unknown = null
   try {
     data = await res.json()
   } catch {
     return undefined as unknown as T
   }
 
-  if (data && typeof data === 'object') {
-    if (data.ok === false) {
-      const errBody = data.error
-      const code = typeof errBody === 'string' ? errBody : errBody?.code
-      const message =
-        typeof errBody === 'string' ? errBody : errBody?.message || res.statusText || 'Request failed'
-      throw buildApiError(res.status, errBody, message, code)
+  const envelope = readRecord(data)
+  if (envelope) {
+    if (envelope.ok === false) {
+      const fields = readErrorFields(envelope.error)
+      throw buildApiError(
+        res.status,
+        envelope.error,
+        fields.message || res.statusText || 'Request failed',
+        fields.code,
+      )
     }
-    if (data.ok === true && 'data' in data) {
-      const payload = data.data as any
-      if (payload && typeof payload === 'object' && payload.status === 'approval_pending') {
-        throw new ApprovalPendingError(payload.approval ?? payload)
+    if (envelope.ok === true && 'data' in envelope) {
+      const payload = envelope.data
+      const payloadRecord = readRecord(payload)
+      if (payloadRecord && payloadRecord.status === 'approval_pending') {
+        throw new ApprovalPendingError(
+          (payloadRecord.approval as ApprovalPendingPayload) ?? (payload as ApprovalPendingPayload),
+        )
       }
       return payload as T
     }
@@ -111,24 +142,26 @@ export async function apiFetch<T = unknown>(
 
 function buildApiError(
   status: number,
-  errBody: any,
+  errBody: unknown,
   fallbackMessage: string,
   fallbackCode?: string,
 ): ApiError {
-  const raw = errBody && typeof errBody === 'object' ? errBody.error || errBody : errBody
-  const rawIsObject = raw !== null && typeof raw === 'object'
+  const container = readRecord(errBody)
+  const nestedError = container ? container.error : undefined
+  const raw: unknown = nestedError ? nestedError : errBody
+  const rawRecord = readRecord(raw)
+  const fields = readErrorFields(raw)
   const code =
-    (rawIsObject && (raw.code || fallbackCode)) ||
+    (rawRecord && (fields.code || fallbackCode)) ||
     fallbackCode ||
     httpErrorCode(status)
   const message =
-    (rawIsObject && raw.message) ||
-    (typeof raw === 'string' && raw) ||
+    (rawRecord && fields.message) ||
+    (typeof raw === 'string' ? raw : undefined) ||
     fallbackMessage ||
     `HTTP ${status}`
-  const retryAfter =
-    (rawIsObject && (raw.retryAfter ?? raw.retry_after)) || undefined
-  return new ApiError(code, message, status, { retryAfter, ...(rawIsObject ? raw : {}) })
+  const retryAfter = readRetryAfter(raw)
+  return new ApiError(code, message, status, { ...(rawRecord ?? {}), retryAfter })
 }
 
 function httpErrorCode(status: number): string {
@@ -211,13 +244,13 @@ export class ApiError extends Error {
   code: string
   status?: number
   retryAfter?: number
-  payload?: any
+  payload?: unknown
 
   constructor(
     code: string | number,
     message: string,
     status?: number,
-    payload?: any,
+    payload?: unknown,
   ) {
     super(message)
     this.name = 'ApiError'
@@ -230,9 +263,6 @@ export class ApiError extends Error {
       this.status = status
       this.payload = payload
     }
-    const retry = payload && (payload.retryAfter ?? payload.retry_after)
-    if (typeof retry === 'number' && Number.isFinite(retry)) {
-      this.retryAfter = retry
-    }
+    this.retryAfter = readRetryAfter(payload)
   }
 }

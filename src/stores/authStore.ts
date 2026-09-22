@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import type { BootstrapData, Capabilities } from '@shared/types'
+import type { BootstrapData, Capabilities, DeprecationNotice } from '@shared/types'
 import { VERSION } from '@shared/version'
+import { normalizeDeprecations } from '@/lib/deprecations'
 
 interface AuthState {
   bootstrapped: boolean
@@ -13,6 +14,7 @@ interface AuthState {
   user: { id?: number | string; username: string; role?: string; path_allowlist?: string[] } | null
   backendVersion: string
   frontendVersion: string
+  deprecations: DeprecationNotice[]
 
   setBootstrap: (data: BootstrapData) => void
   setBootstrapFailed: () => void
@@ -49,6 +51,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   backendVersion: '',
   frontendVersion: import.meta.env.VITE_APP_VERSION || VERSION,
+  deprecations: [],
 
   setBootstrap: (data) =>
     set({
@@ -62,6 +65,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: data.user || null,
       backendVersion: data.backendVersion,
       frontendVersion: data.frontendVersion || VERSION,
+      deprecations: normalizeDeprecations(data.deprecations),
     }),
 
   setBootstrapFailed: () =>

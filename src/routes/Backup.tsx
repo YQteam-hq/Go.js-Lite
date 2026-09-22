@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   HardDriveDownload,
@@ -36,6 +36,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Modal, Confirm } from '@/components/ui/Modal'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { apiFetch } from '@/api/client'
 import { backupApi, type BackupScheduleCreateInput } from '@/api/backup'
 import { backupDestinationsApi, type BackupDestinationCreateInput, type BackupDestinationUpdateInput } from '@/api/backupDestinations'
 import { cronApi } from '@/api/cron'
@@ -1158,7 +1159,7 @@ function DestinationModal({
   const [testResult, setTestResult] = useState<{ ok: boolean; message?: string } | null>(null)
   const [testing, setTesting] = useState(false)
 
-  const resetForms = () => {
+  const resetForms = useCallback(() => {
     if (isEdit && editing) {
       setTypeTab(editing.type)
       if (editing.type === 's3') {
@@ -1201,14 +1202,11 @@ function DestinationModal({
     setSaveAnyway(false)
     setTestResult(null)
     setTesting(false)
-  }
+  }, [isEdit, editing])
 
-  useState(() => {
+  useEffect(() => {
     if (open) resetForms()
-  })
-
-  if (open && !testing && !testResult) {
-  }
+  }, [open, editing?.id, resetForms])
 
   const collectPayload = (): BackupDestinationCreateInput | null => {
     if (typeTab === 's3') {
@@ -1672,15 +1670,8 @@ function SchedulesTab() {
     queryKey: ['internal-cron-config'],
     queryFn: async () => {
       try {
-        const r = await queryClient.fetchQuery({
-          queryKey: ['bootstrap'],
-          queryFn: async () => {
-            const resp = await fetch('/api/bootstrap')
-            return await resp.json()
-          },
-          staleTime: 60_000,
-        })
-        return { internal_cron_token: (r as any).data?.config?.internal_cron_token ?? '' }
+        const data = await apiFetch<{ config?: { internal_cron_token?: string } }>('/bootstrap')
+        return { internal_cron_token: data.config?.internal_cron_token ?? '' }
       } catch {
         return { internal_cron_token: '' }
       }
@@ -1800,7 +1791,7 @@ function SchedulesTab() {
     },
   })
 
-  const schedules = schedulesQuery.data?.schedules ?? []
+  const schedules = useMemo(() => schedulesQuery.data?.schedules ?? [], [schedulesQuery.data])
   const destinations = destinationsQuery.data?.destinations ?? []
   const runs = runsQuery.data?.runs ?? []
 
@@ -2055,7 +2046,7 @@ function RunRow({
   const destOk = (run.destination_results ?? []).filter((r) => r.ok).length
   const destTotal = (run.destination_results ?? []).length
 
-  const statusVariant: any =
+  const statusVariant: 'success' | 'accent' | 'danger' =
     run.status === 'success' ? 'success' : run.status === 'running' ? 'accent' : 'danger'
   const statusIcon =
     run.status === 'success' ? (
@@ -2324,7 +2315,7 @@ function ScheduleModal({
       ? [cronMin, cronHour, cronDom, cronMonth, cronDow].map((s) => s.trim() || '*').join(' ')
       : (CRON_PRESETS.find((p) => p.key === cronPreset)?.expr ?? '0 2 * * *')
 
-  const resetForms = () => {
+  const resetForms = useCallback(() => {
     if (editing) {
       setName(editing.name)
       setEnabled(!!editing.enabled)
@@ -2369,12 +2360,11 @@ function ScheduleModal({
       setKeepMonthly(6)
     }
     setTab('general')
-  }
+  }, [editing])
 
   useEffect(() => {
     if (open) resetForms()
-    
-  }, [open, editing?.id])
+  }, [open, editing?.id, resetForms])
 
   const humanReadable = useMemo(() => {
     if (cronExpr === '0 2 * * *') return `Daily at 02:00`

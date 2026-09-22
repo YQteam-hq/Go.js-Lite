@@ -114,11 +114,11 @@ export function NotificationChannelsCard() {
                         )}
                         {ch.type === 'smtp' && 'host' in ch && ch.host && (
                           <span className="opacity-70">
-                            {ch.host}:{(ch as any).port || '25'}
+                            {ch.host}:{ch.port || '25'}
                           </span>
                         )}
-                        {ch.type === 'email' && (ch as any).to_addr && (
-                          <span className="opacity-70 truncate max-w-[180px]">→ {(ch as any).to_addr}</span>
+                        {ch.type === 'email' && ch.to_addr && (
+                          <span className="opacity-70 truncate max-w-[180px]">→ {ch.to_addr}</span>
                         )}
                       </div>
                     </div>
