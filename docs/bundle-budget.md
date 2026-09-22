@@ -37,14 +37,24 @@ report can be diffed between builds.
 
 ## Current numbers
 
-Measured on the commit that introduced the budget:
+Measured on `main` with `npm run size`:
 
 ```
-Initial JS    137.41 KB gzip  (3 files)
-Initial CSS    10.63 KB gzip  (1 file)
-Initial total 148.04 KB gzip
-Lazy chunks   269.99 KB gzip  (104 files)
+Initial JS    147.27 KB gzip  (4 files)
+Initial CSS    10.77 KB gzip  (1 file)
+Initial total 158.04 KB gzip
+Lazy chunks   253.73 KB gzip  (73 files)
 ```
+
+That leaves roughly `33 KB` gzip of headroom under the budget. The initial JS is made up of
+four chunks:
+
+| Chunk | gzip | Contents |
+| --- | --- | --- |
+| `index` | `71.63 KB` | Application shell, layout and shared components |
+| `vendor` | `53.03 KB` | React, React DOM, React Router, scheduler |
+| `query` | `12.02 KB` | `@tanstack/react-query` |
+| `icons` | `10.59 KB` | `lucide-react` |
 
 Before the audit the initial JS was `330.55 KB` gzip in a single `index` chunk that bundled
 every route, plus a shared `icons` chunk.
@@ -55,19 +65,28 @@ every route, plus a shared `icons` chunk.
   `React.lazy` behind a `Suspense` boundary, so a visit to one page no longer pays for all
   of them. The shell (React, router, query client, layout) stays in the initial payload.
 - **Heavy dependencies stay behind a route.** `@xterm/xterm` is only reachable from the
-  WebShell route, so its `85 KB` gzip lands in a lazy chunk instead of the initial payload.
-- **Icons are tree-shaken per route.** The `icons` manual chunk was removed; `lucide-react`
-  icons are now emitted next to the route that imports them.
+  WebShell route, so its `86 KB` gzip lands in a lazy chunk instead of the initial payload.
+- **Vendor code is split by concern.** `manualChunks` puts `react`, `react-dom` and
+  `react-router` in `vendor`, `@tanstack/react-query` in `query` and `lucide-react` in
+  `icons`. The three chunks are part of the initial payload because the shell imports them
+  on every page.
 - **Dead dependencies are gone.** `recharts`, `date-fns`, `clsx` and
   `class-variance-authority` had no imports in `src/` and were removed. Charts are served by
   the in-house `Sparkline` component, which is a few hundred bytes of SVG instead of a
   charting library.
 
-## Known follow-up
+## Locale loading
 
 Both locale bundles (`src/i18n/locales/en.ts` and `zh.ts`) are eagerly imported by
 `src/i18n/index.ts` and together account for roughly **49 KB gzip** of the initial payload,
 measured by building with the locale map stubbed out. Only one of them is ever rendered at a
 time. Loading the non-active locale through a dynamic import would bring the initial JS down
 to roughly `113 KB` gzip, but it makes `useI18n` asynchronous and can flash untranslated
-strings on first paint, so it is tracked separately rather than bundled into this change.
+strings on first paint, so it is tracked as a separate 1.0 performance task instead of being
+folded into the budget itself.
+
+## Keeping the numbers honest
+
+`npm run size` is the single source of truth for this document. Re-run it after any change
+that touches the application shell, the vendor dependencies or the route table, and update
+the numbers above in the same pull request when they move.

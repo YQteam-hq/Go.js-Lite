@@ -1,10 +1,60 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
+const LAZY_LOCALE = 'en'
+const LAZY_LOCALE_MODULE = 'src/i18n/locales/en/index.ts'
+const UI_STORAGE_KEY = 'gojs-ui'
+
+function lazyLocalePreload(): Plugin {
+  let base = '/'
+  return {
+    name: 'gojs-lazy-locale-preload',
+    configResolved(config) {
+      base = config.base
+    },
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        const bundle = ctx.bundle
+        if (!bundle) return html
+        const chunk = Object.values(bundle).find(
+          (item) =>
+            item.type === 'chunk' &&
+            item.moduleIds.some((id) => id.split('\\').join('/').includes(LAZY_LOCALE_MODULE)),
+        )
+        if (!chunk) return html
+        const prefix = base.endsWith('/') ? base.slice(0, -1) : base
+        const children = [
+          '(function(){',
+          'try{',
+          "var stored=null;",
+          "var raw=localStorage.getItem('" + UI_STORAGE_KEY + "');",
+          'if(raw){stored=JSON.parse(raw).state.language;}',
+          "if(stored!=='zh'&&stored!=='en'){",
+          "var nav=(navigator.language||'').toLowerCase();",
+          "stored=nav.indexOf('zh')===0?'zh':'en';",
+          '}',
+          "if(stored!=='" + LAZY_LOCALE + "'){return;}",
+          "var link=document.createElement('link');",
+          "link.rel='modulepreload';",
+          "link.href='" + prefix + '/' + chunk.fileName + "';",
+          'document.head.appendChild(link);',
+          '}catch(e){}',
+          '})();',
+        ].join('')
+        return {
+          html,
+          tags: [{ tag: 'script', children, injectTo: 'head' }],
+        }
+      },
+    },
+  }
+}
+
 export default defineConfig({
   base: '/gojs/',
-  plugins: [react()],
+  plugins: [react(), lazyLocalePreload()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

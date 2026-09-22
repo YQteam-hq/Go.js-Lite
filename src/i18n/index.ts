@@ -32,3 +32,12 @@ export async function loadLocale(key: LocaleKey): Promise<void> {
   const module = await loaders[key]()
   catalogues.set(key, module.default)
 }
+
+export async function resolveLocale(key: LocaleKey): Promise<LocaleKey> {
+  try {
+    await loadLocale(key)
+    return key
+  } catch {
+    return BOOTSTRAP_LOCALE
+  }
+}

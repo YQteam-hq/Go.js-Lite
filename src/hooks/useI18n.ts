@@ -57,6 +57,7 @@ export function useI18n() {
   }, [language])
 
   const currentLocale = useMemo(() => {
+    void localeTick
     return getLocale(language as LocaleKey)
   }, [language, localeTick])
 

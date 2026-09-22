@@ -202,6 +202,28 @@ describe('lazy locale loading', () => {
     expect(ui.useUiStore.getState().language).toBe('en');
   });
 
+  it('reports the requested locale once it is in place', async () => {
+    vi.resetModules();
+    const fresh = await import('@/i18n');
+    await expect(fresh.resolveLocale('en')).resolves.toBe('en');
+    await expect(fresh.resolveLocale('zh')).resolves.toBe('zh');
+  });
+
+  it('falls back to the bootstrap locale when a chunk cannot be fetched', async () => {
+    vi.resetModules();
+    vi.doMock('@/i18n/locales/en', () => {
+      throw new Error('chunk load failed');
+    });
+    const fresh = await import('@/i18n');
+
+    await expect(fresh.loadLocale('en')).rejects.toThrow();
+    await expect(fresh.resolveLocale('en')).resolves.toBe(fresh.BOOTSTRAP_LOCALE);
+    expect(fresh.isLocaleLoaded('en')).toBe(false);
+
+    vi.doUnmock('@/i18n/locales/en');
+    vi.resetModules();
+  });
+
   it('treats the bootstrap catalogue as always available', async () => {
     vi.resetModules();
     const fresh = await import('@/i18n');
