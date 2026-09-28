@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Sun, Moon, Monitor, Clock, Lock, Download, RefreshCw, Eye, EyeOff, CheckCircle2, Code2, Server, Palette, Users, ExternalLink, Heart, Shield, Copy, RotateCcw, History, KeyRound, QrCode, X, AlertCircle } from 'lucide-react'
+import { Sun, Moon, Monitor, Clock, Lock, Download, RefreshCw, Eye, EyeOff, CheckCircle2, Code2, Server, Palette, Users, ExternalLink, Heart, Shield, Copy, History, KeyRound, QrCode, X, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
@@ -517,7 +517,7 @@ export default function Settings() {
 
       <Card className="stagger-3 card-hover">
         <CardHeader className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-info/10 text-info flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-warning/10 text-warning flex items-center justify-center">
             <Shield size={20} />
           </div>
           <div>
@@ -526,6 +526,15 @@ export default function Settings() {
           </div>
         </CardHeader>
         <CardBody className="space-y-4">
+          <div className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2">
+            <div className="flex items-start gap-2">
+              <AlertCircle size={16} className="text-warning shrink-0 mt-0.5" />
+              <p className="text-xs text-warning">
+                {t('settings.privateAccessDeprecated')}
+              </p>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="block text-sm font-medium text-fg">{t('settings.panelAccessLink')}</label>
             <div className="flex items-center gap-2">
@@ -534,7 +543,7 @@ export default function Settings() {
                 value={settings?.accessToken
                   ? `${window.location.origin}${window.location.pathname}?token=${settings.accessToken}`
                   : t('common.loading')}
-                className="font-mono text-xs"
+                className="font-mono text-xs opacity-60"
               />
               <Button
                 size="sm"
@@ -555,14 +564,12 @@ export default function Settings() {
             </p>
           </div>
 
-          <Button
-            variant="secondary"
-            className="w-full justify-center"
-            onClick={() => setShowRegenToken(true)}
-          >
-            <RotateCcw size={16} />
-            {t('settings.regenerateToken')}
-          </Button>
+          <div className="pt-1 border-t border-border/50">
+            <p className="text-xs text-warning flex items-center gap-1.5">
+              <AlertCircle size={12} />
+              {t('settings.tokenDeprecationWarning')}
+            </p>
+          </div>
         </CardBody>
       </Card>
 
