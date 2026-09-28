@@ -32,6 +32,8 @@ export default defineConfig({
         'src/routes/system/**',
         'src/routes/dashboard/**',
         'src/routes/website-monitor/**',
+        'src/routes/deploy/**',
+        'src/routes/users/**',
         'shared/version.ts',
       ],
       exclude: [
@@ -176,6 +178,18 @@ export default defineConfig({
           lines: 0,
         },
         'src/routes/website-monitor/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/deploy/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/users/**': {
           statements: 0,
           branches: 0,
           functions: 0,
