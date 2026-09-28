@@ -21,6 +21,7 @@ export default defineConfig({
         'src/routes/files/**',
         'src/routes/ssl/**',
         'src/routes/ftp/**',
+        'src/routes/operation-log/**',
         'shared/version.ts',
       ],
       exclude: [
@@ -99,6 +100,12 @@ export default defineConfig({
           lines: 0,
         },
         'src/routes/ftp/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/operation-log/**': {
           statements: 0,
           branches: 0,
           functions: 0,
