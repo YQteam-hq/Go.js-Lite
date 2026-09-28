@@ -56,7 +56,9 @@ const settings = {
     privateAccessDesc: 'Panel entry with a token, hides the panel',
     panelAccessLink: 'Panel access link',
     privateAccessHint: 'Only people who know this link can access the panel. Keep it safe',
+    privateAccessDeprecated: 'This feature is deprecated and will be removed in Go.js 1.0. Consider using session-based authentication instead.',
     regenerateToken: 'Regenerate access token',
+    tokenDeprecationWarning: 'Deprecated: This feature will be removed in a future version.',
     regenerateTokenTitle: 'Regenerate access token',
     regenerateTokenConfirm:
       'After regenerating, the old access link will stop working and every open panel page must be re-opened with the new link. Continue?',

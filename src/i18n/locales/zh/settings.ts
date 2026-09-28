@@ -55,7 +55,9 @@ const settings = {
     privateAccessDesc: '带 token 的面板入口，隐藏面板存在',
     panelAccessLink: '面板访问链接',
     privateAccessHint: '只有知道此链接的人才能访问面板页面，请妥善保存',
+    privateAccessDeprecated: '此功能已弃用，将在 Go.js 1.0 中移除。建议使用基于会话的认证方式。',
     regenerateToken: '重新生成访问令牌',
+    tokenDeprecationWarning: '已弃用：此功能将在未来版本中移除。',
     regenerateTokenTitle: '重新生成访问令牌',
     regenerateTokenConfirm:
       '重新生成后，旧的访问链接将失效，所有已打开的面板页面需要用新链接重新访问。确定要继续吗？',
