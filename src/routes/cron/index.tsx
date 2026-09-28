@@ -27,6 +27,7 @@ import { useI18n } from '@/hooks/useI18n'
 import { useFormat } from '@/lib/format'
 import { resolveErrorText } from '@/lib/errorMessages'
 import type { CronJob, WebcronHistoryResult } from '@shared/types'
+import { NextRunPreview } from './components/NextRunPreview'
 
 interface Template {
   key: string
@@ -70,7 +71,7 @@ function getNextRunTime(expression: string): Date | null {
   const next = new Date()
   next.setSeconds(0, 0)
   next.setMinutes(next.getMinutes() + 1)
-  
+
   for (let i = 0; i < 525600; i++) {
     if (
       matchCronField(min, next.getMinutes()) &&
@@ -635,22 +636,5 @@ export default function Cron() {
         onCancel={() => !saving && setDeleteIndex(null)}
       />
     </div>
-  )
-}
-
-function NextRunPreview({
-  expression,
-  t,
-}: {
-  expression: string
-  t: (key: string, params?: Record<string, string | number>) => string
-}) {
-  const next = useMemo(() => getNextRunTime(expression), [expression])
-  if (!next) return null
-  return (
-    <p className="text-xs text-accent mt-1 flex items-center gap-1">
-      <Clock size={12} />
-      {t('cron.nextRun')}：{formatDateTime(next)}
-    </p>
   )
 }

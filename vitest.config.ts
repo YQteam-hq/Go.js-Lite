@@ -22,6 +22,8 @@ export default defineConfig({
         'src/routes/ssl/**',
         'src/routes/ftp/**',
         'src/routes/operation-log/**',
+        'src/routes/settings/**',
+        'src/routes/cron/**',
         'shared/version.ts',
       ],
       exclude: [
@@ -106,6 +108,18 @@ export default defineConfig({
           lines: 0,
         },
         'src/routes/operation-log/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/settings/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/cron/**': {
           statements: 0,
           branches: 0,
           functions: 0,
