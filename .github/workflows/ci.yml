@@ -129,7 +129,7 @@ jobs:
       - name: Build
         run: npm run build
 
-        - name: Bundle size check         run: npm run size    merge-gate:
+      - name: Bundle size check        run: npm run size  merge-gate:
     name: Merge Gate
     needs: [php-lint, php74-guard, phpunit, frontend]
     if: always()
