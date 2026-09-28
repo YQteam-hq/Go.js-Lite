@@ -77,8 +77,8 @@
 | `docs/bundle-budget.md` 回写（plan FE-5） | ✅ 已完成 | `docs/bundle-budget.md` | PR #56 merged | — |
 | Backup.tsx 拆分（plan FS-5 拆分 1） | ✅ 已完成 | `src/routes/backup/` | 2725行→15个组件；PR #64 | — |
 | FileList.tsx 拆分（plan FS-5 拆分 2） | ✅ 已完成 | `src/routes/files/` | 1431行→多个组件；PR #64 | — |
-| SSL.tsx 拆分（plan FS-5 拆分 3） | 📋 待开工 | `src/routes/SSL.tsx` | 等 FileList 拆完 | 1.5 周 |
-| Ftp.tsx 拆分（plan FS-5 拆分 4） | 📋 待开工 | `src/routes/Ftp.tsx` | 等上 | 1.5 周 |
+| SSL.tsx 拆分（plan FS-5 拆分 3） | ✅ 已完成 | `src/routes/ssl/` | 1184行→9个文件；PR #64 | — |
+| Ftp.tsx 拆分（plan FS-5 拆分 4） | ✅ 已完成 | `src/routes/ftp/` | 1120行→目录结构；PR #64 | — |
 | OperationLog.tsx 拆分（plan FS-5 拆分 5） | 📋 待开工 | `src/routes/OperationLog.tsx` | 等上 | 1.5 周 |
 
 ### M2 末尾（1.0.0-rc）

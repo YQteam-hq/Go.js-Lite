@@ -19,6 +19,8 @@ export default defineConfig({
         'src/stores/authStore.ts',
         'src/routes/backup/**',
         'src/routes/files/**',
+        'src/routes/ssl/**',
+        'src/routes/ftp/**',
         'shared/version.ts',
       ],
       exclude: [
@@ -85,6 +87,18 @@ export default defineConfig({
           lines: 0,
         },
         'src/routes/files/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/ssl/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/ftp/**': {
           statements: 0,
           branches: 0,
           functions: 0,
