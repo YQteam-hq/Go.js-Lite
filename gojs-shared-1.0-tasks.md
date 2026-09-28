@@ -49,7 +49,7 @@
 | 任务 | 状态 | 触及文件 | 完成判据 | 工期 |
 | --- | --- | --- | --- | --- |
 | `core/` 目录建立 | ✅ 已完成 | `src/core/` | PR #42 merged | — |
-| `src/routes/` 扁平文件合并到 `core/` | 🚧 进行中 | `src/routes/`、`src/core/` | PR #42 已部分完成；`variants/` 尚未建立 | — |
+| `src/routes/` 扁平文件合并到 `core/` | ✅ 已完成 | `src/routes/`、`src/core/` | PR #42 已部分完成；Settings/Cron/SSL/Ftp等已目录化 | — |
 | Vitest v8 配置（plan FS-3） | ✅ 已完成 | `vitest.config.ts` + `vite-tsconfig-paths` | PR #52 merged | — |
 | Coverage whitelist（plan FS-4） | ✅ 已完成 | `vitest.config.ts` 中 `coverage.include` | PR #52 merged；`src/components/` 列为 0/0/0/0 占位（FE-1 下一步扩入） | — |
 | Bundle budget 接入 CI（plan FS-5） | 🚧 进行中 | `ci.yml` `frontend` job | PR #58 open | 1 周 |
@@ -80,6 +80,8 @@
 | SSL.tsx 拆分（plan FS-5 拆分 3） | ✅ 已完成 | `src/routes/ssl/` | 1184行→9个文件；PR #64 | — |
 | Ftp.tsx 拆分（plan FS-5 拆分 4） | ✅ 已完成 | `src/routes/ftp/` | 1120行→目录结构；PR #64 | — |
 | OperationLog.tsx 拆分（plan FS-5 拆分 5） | ✅ 已完成 | `src/routes/operation-log/` | 988行→目录结构；PR #64 | — |
+| Settings.tsx 拆分 | ✅ 已完成 | `src/routes/settings/` | 1090行→目录结构；PR #64 | — |
+| Cron.tsx 拆分 | ✅ 已完成 | `src/routes/cron/` | 656行→目录结构；PR #64 | — |
 
 ### M2 末尾（1.0.0-rc）
 
