@@ -183,8 +183,9 @@ class DeprecationsTest extends TestCase
     {
         $report = gojs_upgrade_deprecation_report();
 
-        $this->assertSame(2, $report['count']);
-        $this->assertSame(array('query_api', 'legacy_access_token'), $report['ids']);
+        $this->assertContains('query_api', $report['ids']);
+        $this->assertContains('legacy_access_token', $report['ids']);
+        $this->assertGreaterThanOrEqual(2, $report['count']);
         $this->assertSame(gojs_deprecation_payload(), $report['notices']);
     }
 
@@ -200,6 +201,20 @@ class DeprecationsTest extends TestCase
             $this->assertSame($entry['replacement'], $notice['replacement'], $id);
             $this->assertSame('1.0.0', $notice['removeIn'], $id);
             $this->assertTrue($notice['deprecated'], $id);
+        }
+    }
+
+    public function testUpgradeReportContainsPhp83DeprecationWhenBelowPhp83(): void
+    {
+        $report = gojs_upgrade_deprecation_report();
+
+        if (version_compare(PHP_VERSION, '8.3.0', '<')) {
+            $this->assertArrayHasKey('php83_upgrade_pending', $report['notices']);
+            $notice = $report['notices']['php83_upgrade_pending'];
+            $this->assertSame('PHP 8.3 Upgrade', $notice['feature']);
+            $this->assertSame('PHP < 8.3', $notice['target']);
+            $this->assertSame('PHP 8.3+', $notice['replacement']);
+            $this->assertSame('2.0.0', $notice['removeIn']);
         }
     }
 
