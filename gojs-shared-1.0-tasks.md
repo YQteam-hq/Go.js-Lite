@@ -87,7 +87,7 @@
 | --- | --- | --- | --- | --- |
 | 彻底删除 legacy token 前端暴露面（plan FE-6 第 2 步） | 📋 待开工 | `Settings.tsx`、`Install.tsx`、`src/api/auth.ts` 等 | `grep -rn "accessToken\|regenerate-access-token\|?token=" src/ shared/ variants/` 无命中（i18n 文案除外） | **与 BE-Apache-2 同版本**（硬约束） |
 | 覆盖率白名单扩容（plan FS-8） | ⏳ 阻塞中 | `vitest.config.ts` | 第一步纳入 `src/components`（4036 行）；第二步按已拆目录逐个加；阈值按实测基线设，不一次到位 | 与 FS-5 拆分同步 |
-| 架构约定写入 `CONTRIBUTING.md`（plan FS-9） | 📋 待开工 | `CONTRIBUTING.md` | 七条约定：路由目录 / 数据访问 / 组件归属 / 单文件软上限 / i18n 命名空间 / 覆盖率门槛 / **变体归属**；英文 | — |
+| 架构约定写入 `CONTRIBUTING.md`（plan FS-9） | ✅ 已完成 | `CONTRIBUTING.md` | 七条约定：路由目录 / 数据访问 / 组件归属 / 单文件软上限 / i18n 命名空间 / 覆盖率门槛 / **变体归属**；英文 | — |
 | 前端条目写入 CHANGELOG（plan FE-8） | ⏳ 阻塞中 | `CHANGELOG.md`、`docs/migration-0.8-to-1.0.md` | CHANGELOG 的 `Removed` 含前端移除项；迁移文档含"前端行为变化"小节 | — |
 | `<ShowFor variant>` 包装 + manifest.ts 路由门禁 | ⏳ 阻塞中 | — | 等 `variants/<name>/` 全部建立；Panel 构建产物不出现 Apache 专属组件 | — |
 
