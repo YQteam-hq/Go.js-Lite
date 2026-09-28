@@ -3,9 +3,11 @@
 > Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 > Project language policy: this file is **English only** starting from v0.3.1; Chinese is no longer maintained here.
 
-## [0.9.0] - Unreleased
+## [1.0.0] - Unreleased
 
-Hardening for uploads, sessions, response headers and backup archives, alongside frontend performance, offline and accessibility work. No surface is removed in this release: the two deprecated surfaces below keep working and are scheduled for removal in 1.0.0.
+*The 0.9 line was cancelled; 1.0.0 absorbs every entry originally planned for 0.9.0.*
+
+Hardening for uploads, sessions, response headers and backup archives, alongside frontend performance, offline and accessibility work. No surface is removed: the two deprecated surfaces below keep working and are scheduled for removal in 1.0.0.
 
 ### Added
 - Frontend: every route component is loaded through a Vite dynamic `import()` wrapped in `React.lazy` with a shared `Suspense` fallback, and `manualChunks` isolates the heavy route-only dependencies, so the first paint downloads only the module that belongs to the opened route instead of the whole application bundle.
@@ -26,7 +28,7 @@ Hardening for uploads, sessions, response headers and backup archives, alongside
 ### Deprecated
 - Deprecated: the `?api=<action>` query form now answers with `Deprecation`, `Sunset`, `Link ... rel="deprecation"` and `X-Gojs-Deprecations` headers and is scheduled for removal in 1.0.0.
 - Deprecated: the legacy access token (`?token=`, `X-Access-Token`, `POST /api/regenerate-access-token`) now answers with the same deprecation headers and `deprecated` / `removeIn` / `replacement` fields, and is scheduled for removal in 1.0.0.
-- This release is the **warn** milestone of the schedule in [docs/deprecations.md](docs/deprecations.md): the deprecated surfaces keep working, are frozen in 0.9.9 and are removed in 1.0.0. Whether a caller is affected can be checked from the response headers alone; see the section "How to check whether you are affected" in that document.
+- This release is the **warn** milestone of the schedule in [docs/deprecations.md](docs/deprecations.md): the deprecated surfaces keep working, are frozen in 1.0.0-rc.1 and are removed in 1.0.0. Whether a caller is affected can be checked from the response headers alone; see the section "How to check whether you are affected" in that document.
 
 ### Changed
 - Version: `version.json` is now the single source of truth. `api.php` and `tests/bootstrap.php` derive `VERSION` / `APP_VERSION` from it through `gojs_version()`, `shared/version.ts` imports it, and `package.json` / `package-lock.json` are kept in sync by `npm run version:bump` and verified by `npm run version:check`.
@@ -37,11 +39,11 @@ Hardening for uploads, sessions, response headers and backup archives, alongside
 ### Breaking
 - Uploads are validated on the server before the file is written. Names that rely on a trailing dot, a trailing space, a semicolon or a zero-width character to smuggle an executable extension, and content that does not match its declared type, are now rejected instead of stored. Deployments that intentionally upload such names need an explicit `allowed_extensions` policy or the guard relaxed in `config.php`.
 - An authenticated session is bound to the client signals it was created with and the binding rotates while the session is live. A request from a different network or browser is rejected with `401 session_fingerprint_mismatch` and the session is destroyed, so long-lived sessions that legitimately move between networks have to sign in again.
-- Restoring a backup runs verification first. Archives written before 0.9.0 are flagged `legacy` and a mismatch is reported instead of being extracted over the files root.
+- Restoring a backup runs verification first. Archives written before 1.0.0 are flagged `legacy` and a mismatch is reported instead of being extracted over the files root.
 - Every response now carries the header policy in `backend/security_headers.php`, including a `Content-Security-Policy`. Rendered pages get a self-only policy; a page that relies on inline script or on remote origins must be adjusted or the policy overridden through `security_headers.csp` in `config.php`.
 
-### Migration (0.8 → 0.9)
-See [docs/migration-0.8-to-0.9.md](docs/migration-0.8-to-0.9.md).
+### Migration (0.8 → 1.0)
+See [docs/migration-0.8-to-1.0.md](docs/migration-0.8-to-1.0.md).
 
 ## [0.8.1] - 2026-09-14
 
