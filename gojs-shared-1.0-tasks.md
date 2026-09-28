@@ -38,7 +38,7 @@
 | CHANGELOG 模板 | ✅ 已完成 | PR #49 |
 | `docs/release-notes-1.0.0.md` 模板 | ✅ 已完成 | — |
 | 贡献者 FAQ | ✅ 已完成 | PR #55 |
-| API v1 文档自动生成（OpenAPI） | 📋 待开工 | plan §2.6 DOC-1，1.0.0-pre.1 |
+| API v1 文档 | ✅ 已存在 | `docs/api.md` 完整 |
 
 ---
 
