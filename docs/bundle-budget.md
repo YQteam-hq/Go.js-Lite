@@ -40,19 +40,19 @@ report can be diffed between builds.
 Measured on `main` with `npm run size`:
 
 ```
-Initial JS    147.27 KB gzip  (4 files)
-Initial CSS    10.77 KB gzip  (1 file)
-Initial total 158.04 KB gzip
-Lazy chunks   253.73 KB gzip  (73 files)
+Initial JS    124.32 KB gzip  (4 files)
+Initial CSS    10.79 KB gzip  (1 file)
+Initial total 135.11 KB gzip
+Lazy chunks   280.73 KB gzip  (76 files)
 ```
 
-That leaves roughly `33 KB` gzip of headroom under the budget. The initial JS is made up of
+That leaves roughly `56 KB` gzip of headroom under the budget. The initial JS is made up of
 four chunks:
 
 | Chunk | gzip | Contents |
 | --- | --- | --- |
-| `index` | `71.63 KB` | Application shell, layout and shared components |
 | `vendor` | `53.03 KB` | React, React DOM, React Router, scheduler |
+| `index` | `48.68 KB` | Application shell, layout and shared components |
 | `query` | `12.02 KB` | `@tanstack/react-query` |
 | `icons` | `10.59 KB` | `lucide-react` |
 
