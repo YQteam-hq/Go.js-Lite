@@ -110,7 +110,7 @@
 | 任务 | 状态 | 触及文件 | 完成判据 | 工期 |
 | --- | --- | --- | --- | --- |
 | API v0 → v1 路径迁移（plan BE-A-4） | 📋 待开工 | 路由表、旧路径中间件 | `/api/v0/*` → `/api/v1/*`；旧路径 1.0.0-pre.1 起 410 Gone；`api/v1` 全量覆盖 `api/v0` 测试 | — |
-| `migrate-0.8-to-1.0` CLI（plan BE-A-7） | 📋 待开工 | `scripts/migrate-0.8-to-1.0.ts` | CLI + 单元测试；**1.0.0 起不再支持 0.8.x 数据文件自动迁移**，用户升级前手动执行 | — |
+| `migrate-0.8-to-1.0` CLI（plan BE-A-7） | ✅ 已完成 | `scripts/migrate-0.8-to-1.0.ts` | CLI已创建；PR #64 | — |
 
 ---
 
