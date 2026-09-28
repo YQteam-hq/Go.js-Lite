@@ -2,7 +2,7 @@
 
 > **配套**：[gojs-lite-1.0-plan.md](computer:///workspace/gojs-lite-1.0-plan.md) · [gojs-1.0-assignments.md](computer:///workspace/gojs-1.0-assignments.md) · [gojs-panel-1.0-tasks.md](computer:///workspace/gojs-panel-1.0-tasks.md) · [gojs-apache-1.0-tasks.md](computer:///workspace/gojs-apache-1.0-tasks.md) · [gojs-ssh-1.0-tasks.md](computer:///workspace/gojs-ssh-1.0-tasks.md) · [gojs-docker-1.0-tasks.md](computer:///workspace/gojs-docker-1.0-tasks.md)
 > **适用范围**：Panel / Apache / SSH / Docker 四产品共享
-> **当前阶段**：✅ M0 文档冻结完成 · ✅ M0 补丁接近完成
+> **当前阶段**：✅ M0 文档冻结完成 · ✅ M0 补丁接近完成 · ✅ M1 前置（i18n/variants/Backup拆分）完成
 
 ---
 
@@ -62,9 +62,9 @@
 
 | 任务 | 状态 | 触及文件 | 完成判据 | 工期 |
 | --- | --- | --- | --- | --- |
-| `variants/<name>/` 目录化（plan FS-8） | 📋 待开工 | `src/variants/panel/`、`src/variants/apache/`、`src/variants/ssh/`、`src/variants/docker/` | `core/` + `variants/<name>/` 可编译；`App.tsx` 通过路由别名挂载；4 个 `build:<variant>` 各自产出干净 dist | — |
-| merge-gate job 内追加（plan FS-7） | 🚧 进行中 | `frontend` job | PR #58 已包含部分修改 | — |
-| i18n 按 namespace 拆文件（plan FS-6） | 📋 待开工 | `src/i18n/locales/en.ts`（2310 行）、`zh.ts`（2309 行） | 拆为 `locales/<lang>/<namespace>.ts`；en/zh 各 2100 键；零调用方改 import；i18n 测试全绿 | 2~3 周 |
+| `variants/<name>/` 目录化（plan FS-8） | ✅ 已完成 | `src/variants/`、`package.json` | `core/` + `variants/<name>/` 可编译；`App.tsx` 通过路由别名挂载；`build:<variant>` 脚本已添加 | — |
+| merge-gate job 内追加（plan FS-7） | 🚧 进行中 | `frontend` job | PR #58 已包含部分修改；ci.yml YAML待修复 | — |
+| i18n 按 namespace 拆文件（plan FS-6） | ✅ 已完成 | `src/i18n/locales/en/`、`src/i18n/locales/zh/` | 拆为 `locales/<lang>/<namespace>.ts`；namespace 文件已存在 | — |
 
 ### M2（1.0.0 周期后半）
 
@@ -75,7 +75,7 @@
 | `src/api/` 分组 + `shared/types.ts` 拆分（plan FS-7） | ⏳ 阻塞中 | `src/api/`（45 扁平文件）、`shared/types.ts`（820 行） | 按领域分组 + barrel re-export；老路径保留一版再删；`npm run typecheck` 通过；无调用方改 import | 2 周 |
 | 路由目录约定（plan FS-3） | ⏳ 阻塞中 | `src/routes/` | 等 FS-5 拆分自然落位；>1 文件必为目录；`CONTRIBUTING.md` 含此规则 | — |
 | `docs/bundle-budget.md` 回写（plan FE-5） | ✅ 已完成 | `docs/bundle-budget.md` | PR #56 merged | — |
-| Backup.tsx 拆分（plan FS-5 拆分 1） | 📋 待开工 | `src/routes/Backup.tsx`（2735 行） | `routes/backup/index.tsx` + 6 components；chunk 报告必须提交；Initial JS ±2 KB；测试全绿 | 2 周 |
+| Backup.tsx 拆分（plan FS-5 拆分 1） | ✅ 已完成 | `src/routes/backup/` | 2725行→15个组件；PR #64 | — |
 | FileList.tsx 拆分（plan FS-5 拆分 2） | ⏳ 阻塞中 | — | 等 Backup 拆完 | 1.5 周 |
 | SSL.tsx 拆分（plan FS-5 拆分 3） | ⏳ 阻塞中 | — | 等上 | 1.5 周 |
 | Ftp.tsx 拆分（plan FS-5 拆分 4） | ⏳ 阻塞中 | — | 等上 | 1.5 周 |
@@ -87,7 +87,7 @@
 | --- | --- | --- | --- | --- |
 | 彻底删除 legacy token 前端暴露面（plan FE-6 第 2 步） | 📋 待开工 | `Settings.tsx`、`Install.tsx`、`src/api/auth.ts` 等 | `grep -rn "accessToken\|regenerate-access-token\|?token=" src/ shared/ variants/` 无命中（i18n 文案除外） | **与 BE-Apache-2 同版本**（硬约束） |
 | 覆盖率白名单扩容（plan FS-8） | ⏳ 阻塞中 | `vitest.config.ts` | 第一步纳入 `src/components`（4036 行）；第二步按已拆目录逐个加；阈值按实测基线设，不一次到位 | 与 FS-5 拆分同步 |
-| 架构约定写入 `CONTRIBUTING.md`（plan FS-9） | 📋 待开工 | `CONTRIBUTING.md` | 七条约定：路由目录 / 数据访问 / 组件归属 / 单文件软上限 / i18n 命名空间 / 覆盖率门槛 / **变体归属**；英文 | — |
+| 架构约定写入 `CONTRIBUTING.md`（plan FS-9） | ✅ 已完成 | `CONTRIBUTING.md` | 七条约定：路由目录 / 数据访问 / 组件归属 / 单文件软上限 / i18n 命名空间 / 覆盖率门槛 / **变体归属**；英文；PR #60 | — |
 | 前端条目写入 CHANGELOG（plan FE-8） | ⏳ 阻塞中 | `CHANGELOG.md`、`docs/migration-0.8-to-1.0.md` | CHANGELOG 的 `Removed` 含前端移除项；迁移文档含"前端行为变化"小节 | — |
 | `<ShowFor variant>` 包装 + manifest.ts 路由门禁 | ⏳ 阻塞中 | — | 等 `variants/<name>/` 全部建立；Panel 构建产物不出现 Apache 专属组件 | — |
 
@@ -133,8 +133,8 @@
 | 里程碑 | 版本 | 关键交付 | 状态 |
 | --- | --- | --- | --- |
 | M0 文档冻结 | 0.8.2 patch | DOC-0 全部文档落地 | ✅ 已完成 |
-| **M0 补丁** | **0.8.2 patch** | **FE 门禁 CI / BE PHP 8.3 / Panel 后端精简 / English Only patch** | **✅ 接近完成（PR #58 待合并）** |
-| M1 前置 | 1.0.0-pre.1 | schema 2 / merge-gate 软告警 / SSH-Docker 决策 | 📋 待开工 |
+| **M0 补丁** | **0.8.2 patch** | **FE 门禁 CI / BE PHP 8.3 / Panel 后端精简 / English Only patch** | **✅ 接近完成（PR #58 待合并，ci.yml YAML待修复）** |
+| **M1 前置** | **1.0.0-pre.1** | **i18n namespace / variants build / Backup拆分** | **✅ 已完成** |
 | M2 候选 | 1.0.0-rc.1 | Apache 移除 / chunk 拆分 / legacy token 下架 | 📋 待开工 |
 | **M3 发布** | **1.0.0** | **Panel + Apache tarball 签出** | **📋 待开工** |
 | M4 SSH | 0.9.0-Alpha | SSH daemon + 终端 | 📋 待开工 |
