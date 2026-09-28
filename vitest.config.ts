@@ -28,6 +28,8 @@ export default defineConfig({
         'src/routes/cron/**',
         'src/routes/custom-error-pages/**',
         'src/routes/notifications/**',
+        'src/routes/htaccess/**',
+        'src/routes/system/**',
         'shared/version.ts',
       ],
       exclude: [
@@ -148,6 +150,18 @@ export default defineConfig({
           lines: 0,
         },
         'src/routes/notifications/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/htaccess/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/system/**': {
           statements: 0,
           branches: 0,
           functions: 0,

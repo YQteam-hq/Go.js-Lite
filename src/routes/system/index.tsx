@@ -10,6 +10,7 @@ import { useAuthBootstrap } from '@/hooks/useAuth'
 import { formatBytes } from '@/lib/format'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
+import { InfoRow, InfoCard, formatUptime } from './components'
 
 export default function System() {
   const { t } = useI18n()
@@ -304,64 +305,6 @@ export default function System() {
           </CardBody>
         </Card>
       )}
-    </div>
-  )
-}
-
-function InfoRow({
-  label,
-  value,
-  mono,
-}: {
-  label: string
-  value: string
-  mono?: boolean
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-fg-muted shrink-0">{label}</span>
-      <span className={`text-fg truncate ${mono ? 'font-mono' : ''}`}>{value}</span>
-    </div>
-  )
-}
-
-function formatUptime(seconds: number, t: (key: string) => string): string {
-  const days = Math.floor(seconds / 86400)
-  const hours = Math.floor((seconds % 86400) / 3600)
-  const mins = Math.floor((seconds % 3600) / 60)
-  return `${days}${t('system.days')} ${hours}${t('system.hours')} ${mins}${t('system.minutes')}`
-}
-
-type InfoCardColor = 'accent' | 'success' | 'warning' | 'danger' | 'info'
-
-function InfoCard({
-  icon,
-  label,
-  value,
-  color = 'accent',
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  color?: InfoCardColor
-}) {
-  const colorClasses: Record<InfoCardColor, string> = {
-    accent: 'bg-accent/10 text-accent',
-    success: 'bg-success/10 text-success',
-    warning: 'bg-warning/10 text-warning',
-    danger: 'bg-danger/10 text-danger',
-    info: 'bg-info/10 text-info',
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className={`w-8 h-8 rounded-md flex items-center justify-center ${colorClasses[color]}`}>
-        {icon}
-      </div>
-      <div>
-        <div className="text-xs text-fg-subtle">{label}</div>
-        <div className="text-sm font-medium text-fg font-mono truncate">{value}</div>
-      </div>
     </div>
   )
 }
