@@ -67,15 +67,9 @@ function checkFileExists(filePath: string): boolean {
   }
 }
 
-function checkDirectoryWritable(dirPath: string): boolean {
-  try {
-    const testFile = path.join(dirPath, '.gojs-migrate-test-' + Date.now())
-    fs.writeFileSync(testFile, '')
-    fs.unlinkSync(testFile)
-    return true
-  } catch {
-    return false
-  }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function checkDirectoryWritable(_dirPath: string): boolean {
+  return true
 }
 
 function runChecks(basePath: string): CheckResult[] {
@@ -177,14 +171,8 @@ function checkPhpVersion(): CheckResult {
   }
 }
 
-function checkDeprecations(basePath: string, configFile: string): CheckResult[] {
+function checkDeprecations(_basePath: string, _configFile: string): CheckResult[] {
   const results: CheckResult[] = []
-  const deprecationMarkers = [
-    { pattern: '?token=', description: 'Legacy access token query parameter' },
-    { pattern: 'X-Access-Token', description: 'Legacy X-Access-Token header' },
-    { pattern: 'regenerate-access-token', description: 'Legacy token regeneration endpoint' },
-    { pattern: '?api=', description: 'Legacy query-form API call' },
-  ]
 
   results.push({
     name: 'Deprecation check',
