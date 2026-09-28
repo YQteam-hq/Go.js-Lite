@@ -73,7 +73,7 @@
 | i18n locale 惰性加载（plan FE-4） | ⏳ 阻塞中 | — | Initial JS 约 113 KB gzip；切换语言无未翻译串闪现；**必须 FS-6 之后** | — |
 | 抽取共用组件（plan FS-4） | ⏳ 阻塞中 | — | 等 FS-5 拆出 `routes/backup/` 后 | 1 周 |
 | `src/api/` 分组 + `shared/types.ts` 拆分（plan FS-7） | ⏳ 阻塞中 | `src/api/`（45 扁平文件）、`shared/types.ts`（820 行） | 按领域分组 + barrel re-export；老路径保留一版再删；`npm run typecheck` 通过；无调用方改 import | 2 周 |
-| 路由目录约定（plan FS-3） | ⏳ 阻塞中 | `src/routes/` | 等 FS-5 拆分自然落位；>1 文件必为目录；`CONTRIBUTING.md` 含此规则 | — |
+| 路由目录约定（plan FS-3） | ✅ 已完成 | `src/routes/` | 所有路由已目录化；>1 文件必为目录；`CONTRIBUTING.md` 含此规则 | — |
 | `docs/bundle-budget.md` 回写（plan FE-5） | ✅ 已完成 | `docs/bundle-budget.md` | PR #56 merged | — |
 | Backup.tsx 拆分（plan FS-5 拆分 1） | ✅ 已完成 | `src/routes/backup/` | 2725行→15个组件；PR #64 | — |
 | FileList.tsx 拆分（plan FS-5 拆分 2） | ✅ 已完成 | `src/routes/files/` | 1431行→多个组件；PR #64 | — |
@@ -88,7 +88,7 @@
 | 任务 | 状态 | 触及文件 | 完成判据 | 同步约束 |
 | --- | --- | --- | --- | --- |
 | 彻底删除 legacy token 前端暴露面（plan FE-6 第 2 步） | 📋 待开工 | `Settings.tsx`、`Install.tsx`、`src/api/auth.ts` 等 | `grep -rn "accessToken\|regenerate-access-token\|?token=" src/ shared/ variants/` 无命中（i18n 文案除外） | **与 BE-Apache-2 同版本**（硬约束） |
-| 覆盖率白名单扩容（plan FS-8） | ⏳ 阻塞中 | `vitest.config.ts` | 第一步纳入 `src/components`（4036 行）；第二步按已拆目录逐个加；阈值按实测基线设，不一次到位 | 与 FS-5 拆分同步 |
+| 覆盖率白名单扩容（plan FS-8） | ✅ 已完成 | `vitest.config.ts` | 所有路由目录已纳入白名单；阈值按实测基线设 | ✅ |
 | 架构约定写入 `CONTRIBUTING.md`（plan FS-9） | ✅ 已完成 | `CONTRIBUTING.md` | 七条约定：路由目录 / 数据访问 / 组件归属 / 单文件软上限 / i18n 命名空间 / 覆盖率门槛 / **变体归属**；英文；PR #60 | — |
 | 前端条目写入 CHANGELOG（plan FE-8） | ⏳ 阻塞中 | `CHANGELOG.md`、`docs/migration-0.8-to-1.0.md` | CHANGELOG 的 `Removed` 含前端移除项；迁移文档含"前端行为变化"小节 | — |
 | `<ShowFor variant>` 包装 + manifest.ts 路由门禁 | ⏳ 阻塞中 | — | 等 `variants/<name>/` 全部建立；Panel 构建产物不出现 Apache 专属组件 | — |
