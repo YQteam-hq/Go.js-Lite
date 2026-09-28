@@ -12,6 +12,7 @@ import users from './users';
 import web from './web';
 import php from './php';
 import variants from './variants';
+import apache from './apache';
 
 const zh = {
   ...common,
@@ -28,6 +29,7 @@ const zh = {
   ...web,
   ...php,
   ...variants,
+  ...apache,
 };
 
 export type Translation = typeof zh;

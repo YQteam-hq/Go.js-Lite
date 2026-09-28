@@ -110,6 +110,21 @@ function gojs_upgrade_lock_release() {
 function gojs_upgrade_deprecation_report() {
     $notices = gojs_deprecation_payload();
 
+    $upgrade_notices = array();
+    if (version_compare(PHP_VERSION, '8.3.0', '<')) {
+        $upgrade_notices['php83_upgrade_pending'] = array(
+            'id' => 'php83_upgrade_pending',
+            'feature' => 'PHP 8.3 Upgrade',
+            'message' => 'PHP 8.3 introduces breaking changes. Review migration guide before upgrading.',
+            'target' => 'PHP < 8.3',
+            'replacement' => 'PHP 8.3+',
+            'removeIn' => '2.0.0',
+            'docs' => '/docs/migration-0.8-to-1.0.md',
+        );
+    }
+
+    $notices = array_merge($notices, $upgrade_notices);
+
     return array(
         'count' => count($notices),
         'ids' => array_keys($notices),
