@@ -17,6 +17,8 @@ export default defineConfig({
         'src/i18n/**',
         'src/lib/**',
         'src/stores/authStore.ts',
+        'src/routes/backup/**',
+        'src/routes/files/**',
         'shared/version.ts',
       ],
       exclude: [
@@ -75,6 +77,18 @@ export default defineConfig({
           branches: 70,
           functions: 70,
           lines: 70,
+        },
+        'src/routes/backup/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/files/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
         },
       },
     },
