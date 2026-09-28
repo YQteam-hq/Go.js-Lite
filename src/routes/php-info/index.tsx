@@ -10,6 +10,7 @@ import { toast } from '@/components/ui/Toast'
 import { phpInfoApi } from '@/api/phpinfo'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
+import { InfoCard } from './components/InfoCard'
 
 export default function PhpInfo() {
   const { t } = useI18n()
@@ -178,50 +179,5 @@ export default function PhpInfo() {
         </>
       ) : null}
     </div>
-  )
-}
-
-function InfoCard({
-  icon,
-  label,
-  value,
-  accent,
-  mono,
-  action,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: React.ReactNode
-  accent?: boolean
-  mono?: boolean
-  action?: React.ReactNode
-}) {
-  return (
-    <Card>
-      <CardBody className="flex items-start gap-3">
-        <div
-          className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-            accent ? 'bg-accent/10 text-accent' : 'bg-bg-sunken text-fg-muted'
-          }`}
-        >
-          {icon}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-xs text-fg-subtle">{label}</div>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className={`min-w-0 flex-1 ${mono ? 'font-mono' : ''}`}>
-              {typeof value === 'string' ? (
-                <div className="text-base font-semibold text-fg mt-0.5 truncate">
-                  {value}
-                </div>
-              ) : (
-                value
-              )}
-            </div>
-            {action}
-          </div>
-        </div>
-      </CardBody>
-    </Card>
   )
 }

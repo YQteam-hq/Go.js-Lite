@@ -5,14 +5,14 @@ import { useI18n } from '@/hooks/useI18n'
 import { Spinner } from '@/components/ui/Spinner'
 import AppLayout from '@/components/layout/AppLayout'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import NotFound from '@/routes/NotFound'
+import NotFound from '@/routes/not-found'
 import { useCapabilities } from '@/hooks/useCapabilities'
 import { applyDocumentLanguage } from '@/lib/locale'
 import { activeVariant, variantManifests } from '@/variants/registry'
 import type { TranslationKey } from '@/hooks/useI18n'
 
 const Login = lazy(() => import('@/routes/login'))
-const Install = lazy(() => import('@/routes/Install'))
+const Install = lazy(() => import('@/routes/install'))
 const InviteAccept = lazy(() => import('@/routes/invite-accept'))
 const Dashboard = lazy(() => import('@/routes/dashboard'))
 const FileList = lazy(() => import('@/routes/files'))
@@ -24,7 +24,7 @@ const TableDataEditor = lazy(() => import('@/routes/db/TableDataEditor'))
 const TableStructureManager = lazy(() => import('@/routes/db/TableStructureManager'))
 const QueryBuilder = lazy(() => import('@/routes/db/QueryBuilder'))
 const ExportEnhanced = lazy(() => import('@/routes/db/ExportEnhanced'))
-const PhpInfo = lazy(() => import('@/routes/PhpInfo'))
+const PhpInfo = lazy(() => import('@/routes/php-info'))
 const System = lazy(() => import('@/routes/system'))
 const Settings = lazy(() => import('@/routes/settings'))
 const DiskAnalysis = lazy(() => import('@/routes/disk-analysis'))
@@ -44,7 +44,7 @@ const ApiTokens = lazy(() => import('@/routes/api-tokens'))
 const Deploy = lazy(() => import('@/routes/deploy'))
 const Users = lazy(() => import('@/routes/users'))
 const Sessions = lazy(() => import('@/routes/sessions'))
-const UserActivity = lazy(() => import('@/routes/UserActivity'))
+const UserActivity = lazy(() => import('@/routes/user-activity'))
 const Profile = lazy(() => import('@/routes/profile'))
 const Groups = lazy(() => import('@/routes/groups'))
 const Tokens = lazy(() => import('@/routes/tokens'))
@@ -53,18 +53,18 @@ const Devices = lazy(() => import('@/routes/devices'))
 const NotificationPreferences = lazy(() => import('@/routes/notification-preferences'))
 const Approvals = lazy(() => import('@/routes/approvals'))
 const Composer = lazy(() => import('@/routes/composer'))
-const PhpOpcache = lazy(() => import('@/routes/PhpOpcache'))
-const PhpExtensions = lazy(() => import('@/routes/PhpExtensions'))
-const PhpErrors = lazy(() => import('@/routes/PhpErrors'))
-const PhpFpm = lazy(() => import('@/routes/PhpFpm'))
-const PhpBench = lazy(() => import('@/routes/PhpBench'))
-const PhpIni = lazy(() => import('@/routes/PhpIni'))
-const PhpProcesses = lazy(() => import('@/routes/PhpProcesses'))
-const PhpUpgrade = lazy(() => import('@/routes/PhpUpgrade'))
-const WebShell = lazy(() => import('@/routes/WebShell'))
+const PhpOpcache = lazy(() => import('@/routes/php-opcache'))
+const PhpExtensions = lazy(() => import('@/routes/php-extensions'))
+const PhpErrors = lazy(() => import('@/routes/php-errors'))
+const PhpFpm = lazy(() => import('@/routes/php-fpm'))
+const PhpBench = lazy(() => import('@/routes/php-bench'))
+const PhpIni = lazy(() => import('@/routes/php-ini'))
+const PhpProcesses = lazy(() => import('@/routes/php-processes'))
+const PhpUpgrade = lazy(() => import('@/routes/php-upgrade'))
+const WebShell = lazy(() => import('@/routes/web-shell'))
 const WebsiteMonitor = lazy(() => import('@/routes/website-monitor'))
 const CustomErrorPages = lazy(() => import('@/routes/custom-error-pages'))
-const StatusPage = lazy(() => import('@/routes/StatusPage'))
+const StatusPage = lazy(() => import('@/routes/status-page'))
 
 const activeVariantRoutes = variantManifests[activeVariant].routes
 

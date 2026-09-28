@@ -9,8 +9,8 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonTable } from '@/components/ui/Skeleton'
 import { phpUpgradeApi } from '@/api/phpUpgrade'
 import { useI18n } from '@/hooks/useI18n'
-
-type TabKey = 'upgrade' | 'autoload'
+import { TabButton, type TabKey } from './components/TabButton'
+import { StatCard } from './components/StatCard'
 
 export default function PhpUpgrade() {
   const { t } = useI18n()
@@ -21,26 +21,6 @@ export default function PhpUpgrade() {
 
   const upgrade = upgradeQuery.data
   const audit = auditQuery.data
-
-  const tabButton = (key: TabKey, label: string) => (
-    <button
-      key={key}
-      type="button"
-      onClick={() => setTab(key)}
-      className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-        tab === key ? 'border-accent bg-accent/10 text-accent' : 'border-border text-fg-muted hover:text-fg'
-      }`}
-    >
-      {label}
-    </button>
-  )
-
-  const stat = (label: string, value: React.ReactNode) => (
-    <div className="px-3 py-2 rounded-lg bg-bg-sunken">
-      <div className="text-[11px] text-fg-subtle">{label}</div>
-      <div className="text-sm font-mono text-fg">{value}</div>
-    </div>
-  )
 
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-5xl mx-auto page-enter">
@@ -63,8 +43,8 @@ export default function PhpUpgrade() {
       </div>
 
       <div className="stagger-2 flex flex-wrap gap-2">
-        {tabButton('upgrade', t('phpUpgrade.tabUpgrade'))}
-        {tabButton('autoload', t('phpUpgrade.tabAutoload'))}
+        <TabButton tab={tab} keyName="upgrade" label={t('phpUpgrade.tabUpgrade')} onClick={setTab} />
+        <TabButton tab={tab} keyName="autoload" label={t('phpUpgrade.tabAutoload')} onClick={setTab} />
       </div>
 
       {tab === 'upgrade' && (
@@ -80,10 +60,10 @@ export default function PhpUpgrade() {
                 ))}
             </CardHeader>
             <CardBody className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {stat(t('phpUpgrade.current'), upgrade?.current ?? '—')}
-              {stat(t('phpUpgrade.requiredMin'), upgrade?.required_min ?? '—')}
-              {stat(t('phpUpgrade.requiredConstraint'), upgrade?.required_constraint ?? '—')}
-              {stat(t('phpUpgrade.recommended'), upgrade?.recommended ?? '—')}
+              <StatCard label={t('phpUpgrade.current')} value={upgrade?.current ?? '—'} />
+              <StatCard label={t('phpUpgrade.requiredMin')} value={upgrade?.required_min ?? '—'} />
+              <StatCard label={t('phpUpgrade.requiredConstraint')} value={upgrade?.required_constraint ?? '—'} />
+              <StatCard label={t('phpUpgrade.recommended')} value={upgrade?.recommended ?? '—'} />
             </CardBody>
           </Card>
 

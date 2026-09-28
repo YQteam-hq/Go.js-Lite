@@ -11,14 +11,13 @@ import { toast } from '@/components/ui/Toast'
 import { phpIniApi, type JitMode, type IniSeverity } from '@/api/phpIni'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
+import { TabButton, type TabKey } from './components/TabButton'
 
 const SEVERITY_VARIANT: Record<IniSeverity, 'muted' | 'warning' | 'danger'> = {
   info: 'muted',
   warning: 'warning',
   danger: 'danger',
 }
-
-type TabKey = 'diff' | 'jit' | 'include'
 
 export default function PhpIni() {
   const { t } = useI18n()
@@ -90,19 +89,6 @@ export default function PhpIni() {
 
   const rows = (diffQuery.data?.rows || []).filter((r) => (mismatchOnly ? !r.match : true))
 
-  const tabButton = (key: TabKey, label: string) => (
-    <button
-      key={key}
-      type="button"
-      onClick={() => setTab(key)}
-      className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-        tab === key ? 'border-accent bg-accent/10 text-accent' : 'border-border text-fg-muted hover:text-fg'
-      }`}
-    >
-      {label}
-    </button>
-  )
-
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-5xl mx-auto page-enter">
       <div className="stagger-1 flex items-center justify-between gap-3">
@@ -120,9 +106,9 @@ export default function PhpIni() {
       </div>
 
       <div className="stagger-2 flex flex-wrap gap-2">
-        {tabButton('diff', t('phpIni.tabDiff'))}
-        {tabButton('jit', t('phpIni.tabJit'))}
-        {tabButton('include', t('phpIni.tabIncludePath'))}
+        <TabButton tab={tab} keyName="diff" label={t('phpIni.tabDiff')} onClick={setTab} />
+        <TabButton tab={tab} keyName="jit" label={t('phpIni.tabJit')} onClick={setTab} />
+        <TabButton tab={tab} keyName="include" label={t('phpIni.tabIncludePath')} onClick={setTab} />
       </div>
 
       {runtimeWarning && (

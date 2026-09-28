@@ -3,8 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Terminal as XTermTerminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
-
-
 import '@xterm/xterm/css/xterm.css'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -22,7 +20,7 @@ export default function WebShell() {
 
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  
+
   const queryClient = useQueryClient()
 
   const { data: history, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useQuery({
@@ -57,7 +55,6 @@ export default function WebShell() {
         background: '#1e1e1e',
         foreground: '#ffffff',
         cursor: '#ffffff',
-
         black: '#000000',
         red: '#cd3131',
         green: '#0dbc79',
@@ -79,10 +76,10 @@ export default function WebShell() {
 
     const newFitAddon = new FitAddon()
     const newWebLinksAddon = new WebLinksAddon()
-    
+
     newTerminal.loadAddon(newFitAddon)
     newTerminal.loadAddon(newWebLinksAddon)
-    
+
     newTerminal.open(terminalRef.current)
     newFitAddon.fit()
 
@@ -93,7 +90,7 @@ export default function WebShell() {
     }
 
     window.addEventListener('resize', handleResize)
-    
+
     return () => {
       newTerminal.dispose()
       window.removeEventListener('resize', handleResize)
@@ -118,7 +115,7 @@ export default function WebShell() {
     if (!command.trim() || !terminal || executeMutation.isPending) return
 
     terminal.write(`\r\n$ ${command}\r\n`)
-    
+
     executeMutation.mutate(command, {
       onSuccess: (result) => {
         if (!result.success) {

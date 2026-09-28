@@ -11,6 +11,7 @@ import { phpOpcacheApi, type OpcacheMutationResponse } from '@/api/phpOpcache'
 import { useI18n } from '@/hooks/useI18n'
 import { formatBytes } from '@/lib/format'
 import { resolveErrorText } from '@/lib/errorMessages'
+import { StatCard } from './components/StatCard'
 
 export default function PhpOpcache() {
   const { t } = useI18n()
@@ -57,13 +58,6 @@ export default function PhpOpcache() {
   })
 
   const summary = data?.summary
-
-  const stat = (label: string, value: React.ReactNode, tone?: string) => (
-    <div className="px-3 py-2 rounded-lg bg-bg-sunken">
-      <div className="text-[11px] text-fg-subtle">{label}</div>
-      <div className={`text-sm font-mono ${tone || 'text-fg'}`}>{value}</div>
-    </div>
-  )
 
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-4xl mx-auto page-enter">
@@ -112,19 +106,19 @@ export default function PhpOpcache() {
               </Badge>
             </CardHeader>
             <CardBody className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {stat(
-                t('phpOpcache.hitRate'),
-                summary.hit_rate === null ? '—' : `${(summary.hit_rate * 100).toFixed(2)}%`,
-                summary.hit_rate !== null && summary.hit_rate >= 0.95 ? 'text-success' : 'text-warning',
-              )}
-              {stat(t('phpOpcache.hits'), summary.hits)}
-              {stat(t('phpOpcache.misses'), summary.misses)}
-              {stat(t('phpOpcache.cachedScripts'), summary.cached_scripts)}
-              {stat(t('phpOpcache.memoryUsed'), summary.used_memory === null ? '—' : formatBytes(summary.used_memory))}
-              {stat(t('phpOpcache.memoryFree'), summary.free_memory === null ? '—' : formatBytes(summary.free_memory))}
-              {stat(t('phpOpcache.memoryWasted'), summary.wasted_memory === null ? '—' : formatBytes(summary.wasted_memory))}
-              {stat(t('phpOpcache.oom'), summary.oom_restarts)}
-              {stat(t('phpOpcache.hash'), summary.hash_restarts)}
+              <StatCard
+                label={t('phpOpcache.hitRate')}
+                value={summary.hit_rate === null ? '—' : `${(summary.hit_rate * 100).toFixed(2)}%`}
+                tone={summary.hit_rate !== null && summary.hit_rate >= 0.95 ? 'text-success' : 'text-warning'}
+              />
+              <StatCard label={t('phpOpcache.hits')} value={summary.hits} />
+              <StatCard label={t('phpOpcache.misses')} value={summary.misses} />
+              <StatCard label={t('phpOpcache.cachedScripts')} value={summary.cached_scripts} />
+              <StatCard label={t('phpOpcache.memoryUsed')} value={summary.used_memory === null ? '—' : formatBytes(summary.used_memory)} />
+              <StatCard label={t('phpOpcache.memoryFree')} value={summary.free_memory === null ? '—' : formatBytes(summary.free_memory)} />
+              <StatCard label={t('phpOpcache.memoryWasted')} value={summary.wasted_memory === null ? '—' : formatBytes(summary.wasted_memory)} />
+              <StatCard label={t('phpOpcache.oom')} value={summary.oom_restarts} />
+              <StatCard label={t('phpOpcache.hash')} value={summary.hash_restarts} />
             </CardBody>
           </Card>
 
