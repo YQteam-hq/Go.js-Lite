@@ -2,15 +2,14 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { HeartPulse, ShieldCheck, Gauge, Boxes, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 import { Card, CardBody } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { healthCheckApi } from '@/api/healthCheck'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
-import type { HealthCheckItem, CompatibilityItem } from '@shared/types'
+import { CheckCard } from './components/CheckCard'
+import { CompatibilityCard } from './components/CompatibilityCard'
 
 type TabKey = 'security' | 'performance' | 'compatibility'
-type ItemStatus = 'pass' | 'warning' | 'danger'
 
 export default function HealthCheck() {
   const { t } = useI18n()
@@ -58,7 +57,7 @@ export default function HealthCheck() {
         </Card>
       ) : data ? (
         <>
-          
+
           <Card>
             <CardBody className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex items-center gap-3 shrink-0">
@@ -107,7 +106,7 @@ export default function HealthCheck() {
             </CardBody>
           </Card>
 
-          
+
           <div className="flex gap-1 p-1 bg-bg-sunken rounded-lg overflow-x-auto">
             {tabs.map((tb) => (
               <button
@@ -126,7 +125,7 @@ export default function HealthCheck() {
             ))}
           </div>
 
-          
+
           {tab === 'security' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {data.security.map((item) => (
@@ -151,132 +150,5 @@ export default function HealthCheck() {
         </>
       ) : null}
     </div>
-  )
-}
-
-function StatusBadge({ status }: { status: ItemStatus }) {
-  const { t } = useI18n()
-  if (status === 'pass') {
-    return (
-      <Badge variant="success">
-        <CheckCircle2 size={12} />
-        {t('healthCheck.statusPass')}
-      </Badge>
-    )
-  }
-  if (status === 'warning') {
-    return (
-      <span className="badge bg-warning/10 text-warning">
-        <AlertTriangle size={12} />
-        {t('healthCheck.statusWarning')}
-      </span>
-    )
-  }
-  return (
-    <Badge variant="danger">
-      <XCircle size={12} />
-      {t('healthCheck.statusDanger')}
-    </Badge>
-  )
-}
-
-function CheckCard({ item }: { item: HealthCheckItem }) {
-  const { t } = useI18n()
-  return (
-    <Card>
-      <CardBody className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="font-mono text-sm font-medium text-fg break-all">{item.name}</div>
-            <p className="text-xs text-fg-muted mt-1 leading-relaxed">{item.description}</p>
-          </div>
-          <div className="shrink-0">
-            <StatusBadge status={item.status} />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60">
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-fg-subtle">
-              {t('healthCheck.currentValue')}
-            </div>
-            <div className="font-mono text-xs text-fg mt-0.5 break-all">{item.currentValue || '—'}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-fg-subtle">
-              {t('healthCheck.recommendedValue')}
-            </div>
-            <div className="font-mono text-xs text-fg mt-0.5 break-all">{item.recommendedValue}</div>
-          </div>
-        </div>
-      </CardBody>
-    </Card>
-  )
-}
-
-function CompatibilityCard({ item }: { item: CompatibilityItem }) {
-  const { t } = useI18n()
-  return (
-    <Card>
-      <CardBody className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-fg">{item.name}</div>
-          {item.pass ? (
-            <Badge variant="success">
-              <CheckCircle2 size={12} />
-              {t('healthCheck.compatSupported')}
-            </Badge>
-          ) : (
-            <Badge variant="danger">
-              <XCircle size={12} />
-              {t('healthCheck.compatNotSupported')}
-            </Badge>
-          )}
-        </div>
-
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-fg-subtle mb-1.5">
-            {t('healthCheck.requirements')}
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {item.requirements.map((req, i) => {
-              const isMissingExt = item.missing.some((m) => req.endsWith(': ' + m))
-              return (
-                <span
-                  key={i}
-                  className={`badge font-mono ${
-                    isMissingExt ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'
-                  }`}
-                >
-                  {req}
-                </span>
-              )
-            })}
-          </div>
-        </div>
-
-        {item.missing.length > 0 && (
-          <div className="pt-2 border-t border-border/60">
-            <div className="text-[10px] uppercase tracking-wide text-danger mb-1">
-              {t('healthCheck.missingItems')}
-            </div>
-            <ul className="space-y-1">
-              {item.missing.map((m, i) => (
-                <li key={i} className="text-xs text-danger flex items-start gap-1.5">
-                  <XCircle size={12} className="mt-0.5 shrink-0" />
-                  <span>
-                    <span className="font-mono font-medium">{m}</span>
-                    <span className="text-fg-muted ml-1">
-                      {m === 'PHP 版本不满足'
-                        ? t('healthCheck.suggestionPhp')
-                        : t('healthCheck.suggestionExt', { name: m })}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </CardBody>
-    </Card>
   )
 }
