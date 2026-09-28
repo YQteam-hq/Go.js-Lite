@@ -1,22 +1,22 @@
 import { useQuery } from '@tanstack/react-query'
-import { HardDrive, Server, Clock, Files, Upload, FileText, FolderOpen, Image, FileCode, File, Activity } from 'lucide-react'
+import { HardDrive, Server, Clock, Files, Upload, FileText, Activity } from 'lucide-react'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { SkeletonDashboard } from '@/components/ui/Skeleton'
 import { EmptyError } from '@/components/ui/EmptyState'
 import { dashboardApi } from '@/api/dashboard'
 import { monitorApi } from '@/api/monitor'
-import { Sparkline } from '@/components/ui/Sparkline'
-import { useFormat, getFileExtension, isImageFile, isTextFile } from '@/lib/format'
+import { useFormat } from '@/lib/format'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
-import type { FileEntry, MonitorReport } from '@shared/types'
+import type { MonitorReport } from '@shared/types'
+import { InfoRow, MonitorChart, FileRow } from './components'
 
 export default function Dashboard() {
   const { t } = useI18n()
-  const { formatDate, formatNumber, formatBytes, formatRelativeTime } = useFormat()
+  const { formatDate, formatNumber, formatBytes } = useFormat()
 
   const { data: dashboardData, isLoading: isLoadingDashboard, error: dashboardError, refetch: refetchDashboard } = useQuery({
     queryKey: ['dashboard'],
@@ -250,35 +250,7 @@ export default function Dashboard() {
           ) : (
             <ul className="divide-y divide-border/60">
               {dashboardData.recentFiles.map((f, index) => (
-                <li
-                  key={f.path}
-                  className="flex items-center gap-3 px-5 py-3 hover:bg-fg/[0.03] transition-colors group"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                    f.type === 'dir' ? 'bg-accent/10 text-accent' :
-                    isImageFile(f.name) ? 'bg-purple-500/10 text-purple-500' :
-                    isCodeFile(f.name) ? 'bg-info/10 text-info' :
-                    'bg-bg-sunken text-fg-muted'
-                  }`}>
-                    {renderFileIcon(f, 16)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      to={`/files${f.path}`}
-                      className="text-sm text-fg truncate block hover:text-accent transition-colors font-medium"
-                    >
-                      {f.name}
-                    </Link>
-                    <div className="text-xs text-fg-subtle mt-0.5 flex items-center gap-2">
-                      <span className="truncate">{f.path}</span>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0 hidden sm:block">
-                    <div className="text-sm text-fg-muted">{formatBytes(f.size)}</div>
-                    <div className="text-xs text-fg-subtle mt-0.5">{formatRelativeTime(f.mtime)}</div>
-                  </div>
-                </li>
+                <FileRow key={f.path} file={f} index={index} />
               ))}
             </ul>
           )}
@@ -286,54 +258,4 @@ export default function Dashboard() {
       </Card>
     </div>
   )
-}
-
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-fg-muted shrink-0 text-sm">{label}</span>
-      <span className="text-fg truncate font-medium">{value}</span>
-    </div>
-  )
-}
-
-function MonitorChart({
-  title,
-  current,
-  threshold,
-  data,
-  color,
-  max,
-}: {
-  title: string
-  current: string
-  threshold: string
-  data: number[]
-  color: string
-  max?: number
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-fg-muted">{title}</span>
-        <span className="text-2xs text-fg-subtle">{threshold}</span>
-      </div>
-      <div className="text-lg font-semibold text-fg leading-none">{current}</div>
-      <Sparkline data={data} color={color} max={max} height={44} />
-    </div>
-  )
-}
-
-function isCodeFile(name: string) {
-  const ext = getFileExtension(name)
-  return ['php', 'js', 'ts', 'tsx', 'css', 'html', 'json', 'sql', 'py', 'sh', 'bash', 'yml', 'yaml', 'xml'].includes(ext)
-}
-
-function renderFileIcon(file: FileEntry, size: number) {
-  let Icon = File
-  if (file.type === 'dir') Icon = FolderOpen
-  else if (isImageFile(file.name)) Icon = Image
-  else if (isCodeFile(file.name)) Icon = FileCode
-  else if (isTextFile(file.name)) Icon = FileText
-  return <Icon size={size} />
 }

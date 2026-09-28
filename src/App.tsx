@@ -14,7 +14,7 @@ import type { TranslationKey } from '@/hooks/useI18n'
 const Login = lazy(() => import('@/routes/Login'))
 const Install = lazy(() => import('@/routes/Install'))
 const InviteAccept = lazy(() => import('@/routes/InviteAccept'))
-const Dashboard = lazy(() => import('@/routes/Dashboard'))
+const Dashboard = lazy(() => import('@/routes/dashboard'))
 const FileList = lazy(() => import('@/routes/files'))
 const FileEditor = lazy(() => import('@/routes/files/FileEditor'))
 const DbConnections = lazy(() => import('@/routes/db/DbConnections'))
@@ -62,7 +62,7 @@ const PhpIni = lazy(() => import('@/routes/PhpIni'))
 const PhpProcesses = lazy(() => import('@/routes/PhpProcesses'))
 const PhpUpgrade = lazy(() => import('@/routes/PhpUpgrade'))
 const WebShell = lazy(() => import('@/routes/WebShell'))
-const WebsiteMonitor = lazy(() => import('@/routes/WebsiteMonitor'))
+const WebsiteMonitor = lazy(() => import('@/routes/website-monitor'))
 const CustomErrorPages = lazy(() => import('@/routes/custom-error-pages'))
 const StatusPage = lazy(() => import('@/routes/StatusPage'))
 
@@ -195,7 +195,7 @@ export default function App() {
   useEffect(() => {
     if (!authenticated) return
     const timer = window.setTimeout(() => {
-      void import('@/routes/Dashboard').catch(() => {})
+      void import('@/routes/dashboard').catch(() => {})
     }, 1000)
     return () => window.clearTimeout(timer)
   }, [authenticated])

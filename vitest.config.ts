@@ -30,6 +30,8 @@ export default defineConfig({
         'src/routes/notifications/**',
         'src/routes/htaccess/**',
         'src/routes/system/**',
+        'src/routes/dashboard/**',
+        'src/routes/website-monitor/**',
         'shared/version.ts',
       ],
       exclude: [
@@ -162,6 +164,18 @@ export default defineConfig({
           lines: 0,
         },
         'src/routes/system/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/dashboard/**': {
+          statements: 0,
+          branches: 0,
+          functions: 0,
+          lines: 0,
+        },
+        'src/routes/website-monitor/**': {
           statements: 0,
           branches: 0,
           functions: 0,
