@@ -1,0 +1,261 @@
+import { useQuery } from '@tanstack/react-query'
+import { HardDrive, Server, Clock, Files, Upload, FileText, Activity } from 'lucide-react'
+import { Card, CardBody, CardHeader } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { SkeletonDashboard } from '@/components/ui/Skeleton'
+import { EmptyError } from '@/components/ui/EmptyState'
+import { dashboardApi } from '@/api/dashboard'
+import { monitorApi } from '@/api/monitor'
+import { useFormat } from '@/lib/format'
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/Button'
+import { useI18n } from '@/hooks/useI18n'
+import { resolveErrorText } from '@/lib/errorMessages'
+import type { MonitorReport } from '@shared/types'
+import { InfoRow, MonitorChart, FileRow } from './components'
+
+export default function Dashboard() {
+  const { t } = useI18n()
+  const { formatDate, formatNumber, formatBytes } = useFormat()
+
+  const { data: dashboardData, isLoading: isLoadingDashboard, error: dashboardError, refetch: refetchDashboard } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: () => dashboardApi.get(),
+  })
+
+  const monitorQuery = useQuery({
+    queryKey: ['monitor'],
+    queryFn: () => monitorApi.status(),
+    staleTime: 60 * 1000,
+  })
+  const monitorData: MonitorReport | undefined = monitorQuery.data
+
+  if (isLoadingDashboard) {
+    return (
+      <div className="p-4 md:p-6">
+        <SkeletonDashboard />
+      </div>
+    )
+  }
+
+  if (dashboardError) {
+    return (
+      <div className="p-4 md:p-6">
+        <EmptyError
+          error={resolveErrorText(dashboardError) || t('common.unknownError')}
+          onRetry={() => refetchDashboard()}
+        />
+      </div>
+    )
+  }
+
+  if (!dashboardData) return null
+
+  const diskPercent = dashboardData.diskTotal > 0 ? (dashboardData.diskUsed / dashboardData.diskTotal) * 100 : 0
+
+  const getDiskColor = () => {
+    if (diskPercent >= 90) return 'from-danger to-danger/70'
+    if (diskPercent >= 80) return 'from-warning to-warning/70'
+    return 'from-accent to-accent/70'
+  }
+
+  const getDiskTextColor = () => {
+    if (diskPercent >= 90) return 'text-danger'
+    if (diskPercent >= 80) return 'text-warning'
+    return 'text-accent'
+  }
+
+  return (
+    <div className="p-4 md:p-6 space-y-5 page-enter">
+      <div className="flex items-center justify-between stagger-1">
+        <div>
+          <h1 className="text-xl font-semibold text-fg">{t('dashboard.title')}</h1>
+          <p className="text-sm text-fg-muted mt-0.5">{t('dashboard.subtitle')}</p>
+        </div>
+        <Link to="/files">
+          <Button variant="secondary" size="sm" className="active:scale-95">
+            <Files size={16} />
+            {t('dashboard.fileManager')}
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-2">
+        <Card className="card-hover">
+          <CardHeader className="flex items-center gap-3 py-4">
+            <div className="w-11 h-11 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+              <Server size={20} />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-fg">{t('dashboard.serverInfo')}</div>
+              <div className="text-xs text-fg-subtle">{t('dashboard.serverInfoSubtitle')}</div>
+            </div>
+          </CardHeader>
+          <CardBody className="space-y-2.5 text-sm">
+            <InfoRow label={t('dashboard.phpVersion')} value={dashboardData.phpVersion} />
+            <InfoRow label={t('dashboard.sapi')} value={dashboardData.sapi} />
+            <InfoRow label={t('dashboard.webServer')} value={dashboardData.webServer} />
+            <InfoRow label={t('dashboard.hostname')} value={dashboardData.hostname} />
+            <InfoRow label={t('dashboard.timezone')} value={dashboardData.timezone} />
+            <InfoRow label={t('dashboard.currentTime')} value={formatDate(dashboardData.now)} />
+          </CardBody>
+        </Card>
+
+        <Card className="card-hover">
+          <CardHeader className="flex items-center gap-3 py-4">
+            <div className="w-11 h-11 rounded-xl bg-success/10 text-success flex items-center justify-center">
+              <HardDrive size={20} />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-fg">{t('dashboard.diskUsage')}</div>
+              <div className="text-xs text-fg-subtle">{t('dashboard.diskUsageSubtitle')}</div>
+            </div>
+          </CardHeader>
+          <CardBody className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-fg-muted">{t('dashboard.used')}</span>
+                <span className={`font-semibold ${getDiskTextColor()}`}>{formatBytes(dashboardData.diskUsed)}</span>
+              </div>
+              <div
+                className="h-2.5 bg-bg-sunken rounded-full overflow-hidden cursor-help"
+                title={`${t('dashboard.memUsedTotal', { used: formatBytes(dashboardData.diskUsed), total: formatBytes(dashboardData.diskTotal) })}\n${t('dashboard.memPercentage', { pct: diskPercent.toFixed(1) })}`}
+              >
+                <div
+                  className={`h-full bg-gradient-to-r ${getDiskColor()} rounded-full transition-all duration-700 ease-out`}
+                  style={{ width: `${Math.min(diskPercent, 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-fg-subtle">
+                <span>{t('dashboard.total')} {formatBytes(dashboardData.diskTotal)}</span>
+                <span className={`font-medium ${getDiskTextColor()}`}>{diskPercent.toFixed(1)}%</span>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-border/50 space-y-2.5">
+              <InfoRow label={t('dashboard.free')} value={formatBytes(dashboardData.diskFree)} />
+              <InfoRow label={t('dashboard.fileCount')} value={formatNumber(dashboardData.fileCount)} />
+              <InfoRow label={t('dashboard.totalSize')} value={formatBytes(dashboardData.totalSize)} />
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className="card-hover">
+          <CardHeader className="flex items-center gap-3 py-4">
+            <div className="w-11 h-11 rounded-xl bg-warning/10 text-warning flex items-center justify-center">
+              <Upload size={20} />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-fg">{t('dashboard.uploadMemory')}</div>
+              <div className="text-xs text-fg-subtle">{t('dashboard.uploadMemorySubtitle')}</div>
+            </div>
+          </CardHeader>
+          <CardBody className="space-y-2.5 text-sm">
+            <InfoRow label={t('dashboard.uploadLimit')} value={formatBytes(dashboardData.maxUpload)} />
+            <InfoRow label={t('dashboard.postLimit')} value={formatBytes(dashboardData.maxPost)} />
+            <InfoRow label={t('dashboard.memoryLimit')} value={formatBytes(dashboardData.memoryLimit)} />
+            <InfoRow label={t('dashboard.rootPath')} value={<code className="text-xs bg-bg-sunken px-1.5 py-0.5 rounded">{dashboardData.rootPath}</code>} />
+          </CardBody>
+        </Card>
+      </div>
+
+      <Card className="stagger-3">
+        <CardHeader className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-info/10 text-info flex items-center justify-center">
+              <Activity size={20} />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-fg">{t('monitor.title')}</div>
+              <div className="text-xs text-fg-subtle">{t('monitor.estimateHint')}</div>
+            </div>
+          </div>
+          {monitorData && (
+            <span className="text-2xs text-fg-subtle">
+              {t('monitor.everyMin', { min: monitorData.config.sample_interval_min })}
+            </span>
+          )}
+        </CardHeader>
+        <CardBody>
+          {monitorQuery.isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="space-y-2 animate-pulse">
+                  <div className="h-3 w-20 bg-bg-sunken rounded" />
+                  <div className="h-6 w-16 bg-bg-sunken rounded" />
+                  <div className="h-12 bg-bg-sunken rounded" />
+                </div>
+              ))}
+            </div>
+          ) : monitorQuery.isError ? (
+            <EmptyError
+              error={resolveErrorText(monitorQuery.error) || t('common.unknownError')}
+              onRetry={() => monitorQuery.refetch()}
+            />
+          ) : !monitorData || monitorData.history.length === 0 ? (
+            <div className="py-10 text-center">
+              <Activity size={28} className="mx-auto mb-3 text-fg-subtle" />
+              <p className="text-sm text-fg-muted">{t('monitor.noData')}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <MonitorChart
+                title={t('monitor.diskUsage')}
+                current={`${monitorData.sample ? monitorData.sample.disk_used_pct.toFixed(1) : '—'}%`}
+                threshold={t('monitor.threshold') + ' ' + monitorData.thresholds.disk_threshold_pct + '%'}
+                data={monitorData.history.map((h) => h.disk_used_pct)}
+                color="text-accent"
+                max={100}
+              />
+              <MonitorChart
+                title={t('monitor.inodeUsage')}
+                current={`${monitorData.sample ? monitorData.sample.inode_used_pct.toFixed(1) : '—'}%`}
+                threshold={t('monitor.threshold') + ' ' + monitorData.thresholds.inode_threshold_pct + '%'}
+                data={monitorData.history.map((h) => h.inode_used_pct)}
+                color="text-warning"
+                max={100}
+              />
+              <MonitorChart
+                title={t('monitor.panelTraffic')}
+                current={formatBytes(monitorData.sample ? monitorData.sample.bandwidth_delta : 0)}
+                threshold={t('monitor.estimateHint')}
+                data={monitorData.history.map((h) => h.bandwidth_delta)}
+                color="text-info"
+              />
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card className="stagger-3">
+        <CardHeader className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-fg/5 text-fg-muted flex items-center justify-center">
+              <Clock size={20} />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-fg">{t('dashboard.recentFiles')}</div>
+              <div className="text-xs text-fg-subtle">{t('dashboard.recentFilesSubtitle')}</div>
+            </div>
+          </div>
+          <Badge variant="muted">{dashboardData.recentFiles.length}{t('dashboard.fileCountBadge')}</Badge>
+        </CardHeader>
+        <CardBody className="p-0">
+          {dashboardData.recentFiles.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-bg-sunken flex items-center justify-center text-fg-subtle">
+                <FileText size={28} />
+              </div>
+              <p className="text-sm text-fg-muted">{t('dashboard.noFiles')}</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border/60">
+              {dashboardData.recentFiles.map((f, index) => (
+                <FileRow key={f.path} file={f} index={index} />
+              ))}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
+    </div>
+  )
+}

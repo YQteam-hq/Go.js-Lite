@@ -1,8 +1,8 @@
 import { lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
-const Htaccess = lazy(() => import('@/routes/Htaccess'))
-const SSL = lazy(() => import('@/routes/SSL'))
+const Htaccess = lazy(() => import('@/routes/htaccess'))
+const SSL = lazy(() => import('@/routes/ssl'))
 
 export default function Apache() {
   return (

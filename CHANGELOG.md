@@ -9,15 +9,44 @@
 
 Hardening for uploads, sessions, response headers and backup archives, alongside frontend performance, offline and accessibility work. No surface is removed: the two deprecated surfaces below keep working and are scheduled for removal in 1.0.0.
 
-### Added
+### Go.js Panel
+
+The shared frontend and backend foundation, plus the Panel-specific extensions.
+
 - Frontend: every route component is loaded through a Vite dynamic `import()` wrapped in `React.lazy` with a shared `Suspense` fallback, and `manualChunks` isolates the heavy route-only dependencies, so the first paint downloads only the module that belongs to the opened route instead of the whole application bundle.
-- Frontend: directory listings render through a windowed list that mounts only the visible rows plus an overscan band, and falls back to the plain DOM below the windowing threshold so find-in-page, text selection and tab order are unaffected for ordinary directories. The window follows the scroll offset through `requestAnimationFrame` and the viewport through `ResizeObserver`, and the grid derives its column count from the measured width. Delete, rename and chmod patch the query cache instead of refetching the whole directory.
-- Frontend: offline shell - a service worker, a web manifest and an offline fallback page keep the panel shell loading without a network. Push support is detected before it is used and every failure path returns a typed reason (`unsupported`, `insecure_context`, `no_service_worker`, `no_push_manager`, `permission_denied`, `subscribe_failed`, `no_application_server_key`), so the notification settings explain the state instead of rendering a broken control. The application server key is read from the environment and the service worker is only registered in production builds.
-- Frontend: a public `/status` page that keeps working without a session and degrades to the data it can read, with the overall verdict derived from the health summary and the disk usage, plus an accessible storage meter (`role="progressbar"` with `aria-valuetext`) that the disk analysis page reuses.
-- Frontend: a Cmd+K command palette driven by the same navigation model as the sidebar, a focus trap and an accessible name for the modal, and the navigation items moved into one data source.
-- Tests: the Vitest + jsdom foundation with a v8 coverage threshold of 70% statements, branches, functions and lines over `src/api/client.ts`, `src/hooks/useI18n.ts`, `src/i18n`, `src/lib`, `src/stores/authStore.ts` and `shared/version.ts`.
-- CI: the unit test, English-only and review gates are aggregated behind a single `Merge Gate` required status check, and a new `PHP 7.4 Compat Guard` job lints the production sources with PHP 7.4 itself and greps them for PHP 8-only syntax.
-- Docs: operator guides for [scheduled tasks](docs/scheduled-tasks.md), [two-factor authentication](docs/mfa.md) and the [database query builder](docs/database-query-builder.md), and the API reference now carries reference entries for most of the endpoints that shipped in 0.8.0 without one.
+- Frontend: directory listings render through a windowed list that mounts only the visible rows plus an overscan band, and falls back to the plain DOM below the windowing threshold so find-in-page, text selection and tab order are unaffected for ordinary directories.
+- Frontend: offline shell - a service worker, a web manifest and an offline fallback page keep the panel shell loading without a network.
+- Frontend: a public `/status` page that keeps working without a session and degrades to the data it can read.
+- Frontend: a Cmd+K command palette driven by the same navigation model as the sidebar.
+- Tests: the Vitest + jsdom foundation with a v8 coverage threshold of 70%.
+- CI: the unit test, English-only and review gates are aggregated behind a single `Merge Gate`.
+- Docs: operator guides for [scheduled tasks](docs/scheduled-tasks.md), [two-factor authentication](docs/mfa.md) and the [database query builder](docs/database-query-builder.md).
+
+### Go.js Apache
+
+Apache-specific configuration generation and management.
+
+- `.htaccess` template system with per-site configuration generation.
+- SSL certificate management via ACME/Let's Encrypt.
+- Directory protection (`htpasswd`) management.
+
+### Go.js SSH
+
+SSH daemon management and terminal integration. Planned for 0.9.0-Alpha.
+
+### Go.js Docker
+
+Docker API integration and container management. Planned for 0.5.0-Prototype.
+
+### Added (Shared)
+
+The following apply to all Go.js variants:
+
+- Upload guard: `backend/upload_guard.php` centralises upload validation and runs it from both `upload` and `upload-chunk`.
+- Security: `backend/security_headers.php` centralises the response header policy and emits it on every response.
+- Backup integrity: `backup/create` writes a `manifest.json` entry into the archive.
+- Session fingerprint: every authenticated request derives a fingerprint from the client signals and a random per-session salt.
+- Version: `version.json` is now the single source of truth.
 
 ### Security
 - Upload guard: `backend/upload_guard.php` centralises upload validation and runs it from both `upload` and `upload-chunk` — bypass-resistant extension checks (`photo.php.jpg`, `payload.php.`, `payload.php `, `payload.ph%70`), reserved server configuration names (`.htaccess`, `.user.ini`, `php.ini`, `.env`, `web.config`), file name length limits, optional allow list mode, content sniffing against the declared type (`finfo` with a magic-byte fallback) and active content detection (SVG scripts, event handlers, frames, external entities, meta refresh, polyglot images). `GET|POST /api/upload-guard` returns the active policy and can inspect a single path.
