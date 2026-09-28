@@ -3,13 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import {
   HardDrive,
   BarChart3,
-  Folder,
   FileText,
-  AlertCircle,
   RefreshCw,
-  Clock,
   ArrowLeft,
-  ChevronRight,
   Home,
 } from 'lucide-react'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
@@ -20,7 +16,13 @@ import { StorageMeter } from '@/components/disk/StorageMeter'
 import { diskAnalysisApi } from '@/api/diskAnalysis'
 import { useFormat } from '@/lib/format'
 import { useI18n } from '@/hooks/useI18n'
-import type { DiskDirectory, LargeFile } from '@shared/types'
+import type { DiskDirectory } from '@shared/types'
+import { OverviewStat } from './components/OverviewStat'
+import { DirectoryRow } from './components/DirectoryRow'
+import { LargeFileRow } from './components/LargeFileRow'
+import { DirectorySkeleton } from './components/DirectorySkeleton'
+import { ErrorState } from './components/ErrorState'
+import { DiskRing, DirBarChart } from './components/DiskRing'
 
 function getParentPath(path: string): string {
   if (path === '/' || path === '') return '/'
@@ -293,167 +295,6 @@ export default function DiskAnalysis() {
   )
 }
 
-type Color = 'accent' | 'success' | 'warning' | 'danger' | 'info'
-
-const overviewColorClasses: Record<Color, string> = {
-  accent: 'bg-accent/10 text-accent',
-  success: 'bg-success/10 text-success',
-  warning: 'bg-warning/10 text-warning',
-  danger: 'bg-danger/10 text-danger',
-  info: 'bg-info/10 text-info',
-}
-
-function OverviewStat({
-  label,
-  value,
-  color = 'accent',
-}: {
-  label: string
-  value: string
-  color?: Color
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div
-        className={`w-8 h-8 rounded-md flex items-center justify-center ${overviewColorClasses[color]}`}
-      >
-        <HardDrive size={16} />
-      </div>
-      <div className="text-xs text-fg-subtle">{label}</div>
-      <div className="text-sm font-medium text-fg font-mono truncate">{value}</div>
-    </div>
-  )
-}
-
-function DirectoryRow({
-  dir,
-  maxDirSize,
-  formatBytes,
-  t,
-}: {
-  dir: DiskDirectory
-  maxDirSize: number
-  formatBytes: (n: number) => string
-  t: (key: string) => string
-}) {
-  const barWidth = maxDirSize > 0 ? (dir.size / maxDirSize) * 100 : 0
-  return (
-    <li className="px-4 py-3">
-      <div className="flex items-center gap-2 mb-1.5">
-        <Folder size={14} className="text-fg-muted shrink-0" />
-        <span className="text-sm font-medium text-fg truncate flex-1 min-w-0" title={dir.path}>
-          {dir.name}
-        </span>
-        <span className="text-sm text-fg font-mono shrink-0">{formatBytes(dir.size)}</span>
-      </div>
-      <div className="h-1.5 bg-bg-sunken rounded-full overflow-hidden mb-1">
-        <div
-          className="h-full bg-accent/70 rounded-full transition-all duration-300"
-          style={{ width: `${Math.min(barWidth, 100)}%` }}
-        />
-      </div>
-      <div className="flex justify-between text-xs text-fg-subtle">
-        <span>
-          {dir.fileCount} {t('diskAnalysis.fileCount')}
-        </span>
-        <span>{dir.percent.toFixed(1)}%</span>
-      </div>
-    </li>
-  )
-}
-
-function LargeFileRow({
-  file,
-  formatBytes,
-  formatDate,
-}: {
-  file: LargeFile
-  formatBytes: (n: number) => string
-  formatDate: (ts: number) => string
-}) {
-  const modifiedTs = file.modified ? new Date(file.modified).getTime() / 1000 : 0
-  return (
-    <li className="px-4 py-3">
-      <div className="flex items-center gap-2 mb-1">
-        <FileText size={14} className="text-fg-muted shrink-0" />
-        <span className="text-sm font-medium text-fg truncate flex-1 min-w-0" title={file.name}>
-          {file.name}
-        </span>
-        <span className="text-sm text-fg font-mono shrink-0">{formatBytes(file.size)}</span>
-      </div>
-      <div className="flex items-center gap-3 text-xs text-fg-subtle pl-5">
-        <span className="truncate min-w-0" title={file.path}>
-          {file.path}
-        </span>
-        {modifiedTs > 0 && (
-          <span className="flex items-center gap-1 shrink-0">
-            <Clock size={11} />
-            {formatDate(modifiedTs)}
-          </span>
-        )}
-      </div>
-    </li>
-  )
-}
-
-function DirectorySkeleton() {
-  return (
-    <div className="divide-y divide-border">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="px-4 py-3 space-y-2">
-          <div className="flex items-center gap-2">
-            <Skeleton variant="circular" width={14} height={14} />
-            <Skeleton variant="text" className="flex-1" />
-            <Skeleton variant="text" className="w-16 h-4" />
-          </div>
-          <Skeleton variant="rectangular" height={6} className="w-full" />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ErrorState({
-  message,
-  onRetry,
-  retryLabel,
-  compact = false,
-}: {
-  message: string
-  onRetry: () => void
-  retryLabel: string
-  compact?: boolean
-}) {
-  if (compact) {
-    return (
-      <div className="text-center">
-        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-danger/10 text-danger flex items-center justify-center">
-          <AlertCircle size={24} />
-        </div>
-        <p className="text-sm text-fg-muted mb-4">{message}</p>
-        <Button variant="secondary" size="sm" onClick={onRetry}>
-          <RefreshCw size={16} />
-          {retryLabel}
-        </Button>
-      </div>
-    )
-  }
-  return (
-    <Card className="p-8 text-center">
-      <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-danger/10 text-danger flex items-center justify-center">
-        <AlertCircle size={28} />
-      </div>
-      <p className="text-sm font-medium text-fg mb-1">{message}</p>
-      <div className="mb-5">
-        <Button variant="secondary" size="sm" onClick={onRetry} className="mt-3">
-          <RefreshCw size={16} />
-          {retryLabel}
-        </Button>
-      </div>
-    </Card>
-  )
-}
-
 type TFunc = (key: string, params?: Record<string, string | number>) => string
 
 function DiskRingCard({
@@ -509,91 +350,6 @@ function DiskRingCard({
         )}
       </CardBody>
     </Card>
-  )
-}
-
-function DiskRing({
-  percent,
-  used,
-  total,
-  formatBytes,
-  t,
-}: {
-  percent: number
-  used: number
-  total: number
-  formatBytes: (n: number) => string
-  t: TFunc
-}) {
-  const clamped = Math.min(Math.max(percent, 0), 100)
-  const isHighUsage = clamped >= 80
-  const radius = 70
-  const circumference = 2 * Math.PI * radius
-  const dash = (clamped / 100) * circumference
-  const displayPercent = total > 0 ? clamped.toFixed(0) : '—'
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative">
-        <svg
-          viewBox="0 0 160 160"
-          className="w-36 h-36 md:w-40 md:h-40"
-          role="img"
-          aria-label={`${t('diskAnalysis.usage')} ${displayPercent}%`}
-        >
-          <circle
-            cx="80"
-            cy="80"
-            r={radius}
-            fill="none"
-            strokeWidth="20"
-            className="stroke-bg-sunken"
-          />
-          <circle
-            cx="80"
-            cy="80"
-            r={radius}
-            fill="none"
-            strokeWidth="20"
-            strokeDasharray={`${dash} ${circumference}`}
-            strokeLinecap="round"
-            transform="rotate(-90 80 80)"
-            className={isHighUsage ? 'stroke-warning' : 'stroke-accent'}
-            style={{ transition: 'stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1)' }}
-          />
-          <text
-            x="80"
-            y="80"
-            textAnchor="middle"
-            dominantBaseline="central"
-            className="fill-fg font-mono"
-            style={{ fontSize: 30, fontWeight: 700 }}
-          >
-            {total > 0 ? `${displayPercent}%` : displayPercent}
-          </text>
-        </svg>
-      </div>
-      <div className="mt-4 text-center space-y-1">
-        <div className="text-sm text-fg-muted">
-          {t('diskAnalysis.usedOfTotal', {
-            used: formatBytes(used),
-            total: formatBytes(total),
-          })}
-        </div>
-        <div className="flex items-center justify-center gap-3 text-xs">
-          <span className="flex items-center gap-1.5">
-            <span
-              className={`inline-block w-2 h-2 rounded-full ${isHighUsage ? 'bg-warning' : 'bg-accent'}`}
-            />
-            <span className="text-fg-subtle">{t('diskAnalysis.used')}</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-2 h-2 rounded-full bg-bg-sunken border border-border" />
-            <span className="text-fg-subtle">{t('diskAnalysis.free')}</span>
-          </span>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -706,75 +462,5 @@ function DirBarChartCard({
         )}
       </CardBody>
     </Card>
-  )
-}
-
-function DirBarChart({
-  directories,
-  totalSize,
-  maxDirSize,
-  onDrillDown,
-  formatBytes,
-  t,
-}: {
-  directories: DiskDirectory[]
-  totalSize: number
-  maxDirSize: number
-  onDrillDown: (path: string) => void
-  formatBytes: (n: number) => string
-  t: TFunc
-}) {
-  return (
-    <div className="p-3 space-y-1">
-      {directories.map((dir, i) => {
-        const barWidth = maxDirSize > 0 ? (dir.size / maxDirSize) * 100 : 0
-        const sharePct = totalSize > 0 ? (dir.size / totalSize) * 100 : 0
-        return (
-          <button
-            key={`${dir.path}-${i}`}
-            type="button"
-            onClick={() => onDrillDown(dir.path)}
-            className="w-full text-left rounded-md px-2 py-1.5 transition-colors hover:bg-bg-sunken focus-ring group"
-            title={t('diskAnalysis.drillHint')}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xs text-fg-subtle w-4 shrink-0 text-right font-mono">
-                {i + 1}
-              </span>
-              <Folder size={13} className="text-fg-muted shrink-0 group-hover:text-accent transition-colors" />
-              <span
-                className="text-sm font-medium text-fg truncate flex-1 min-w-0"
-                title={dir.path}
-              >
-                {dir.name}
-              </span>
-              <ChevronRight
-                size={13}
-                className="text-fg-subtle/50 shrink-0 group-hover:text-accent group-hover:translate-x-0.5 transition-all"
-              />
-              <span className="text-xs text-fg font-mono shrink-0 w-16 text-right">
-                {formatBytes(dir.size)}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 shrink-0" />
-              <div className="flex-1 h-2 bg-bg-sunken rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(barWidth, 100)}%`,
-                    background:
-                      'linear-gradient(90deg, hsl(var(--accent)), hsl(var(--warning)))',
-                  }}
-                />
-              </div>
-              <span className="text-2xs text-fg-subtle shrink-0 w-12 text-right font-mono">
-                {sharePct.toFixed(1)}%
-              </span>
-            </div>
-          </button>
-        )
-      })}
-    </div>
   )
 }
