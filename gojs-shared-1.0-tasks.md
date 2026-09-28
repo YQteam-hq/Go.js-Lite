@@ -2,7 +2,7 @@
 
 > **配套**：[gojs-lite-1.0-plan.md](computer:///workspace/gojs-lite-1.0-plan.md) · [gojs-1.0-assignments.md](computer:///workspace/gojs-1.0-assignments.md) · [gojs-panel-1.0-tasks.md](computer:///workspace/gojs-panel-1.0-tasks.md) · [gojs-apache-1.0-tasks.md](computer:///workspace/gojs-apache-1.0-tasks.md) · [gojs-ssh-1.0-tasks.md](computer:///workspace/gojs-ssh-1.0-tasks.md) · [gojs-docker-1.0-tasks.md](computer:///workspace/gojs-docker-1.0-tasks.md)
 > **适用范围**：Panel / Apache / SSH / Docker 四产品共享
-> **当前阶段**：✅ M0 文档冻结完成 · ✅ M0 补丁接近完成
+> **当前阶段**：✅ M0 文档冻结完成 · ✅ M0 补丁接近完成 · ✅ M1 前置（i18n/variants）完成
 
 ---
 
@@ -62,9 +62,9 @@
 
 | 任务 | 状态 | 触及文件 | 完成判据 | 工期 |
 | --- | --- | --- | --- | --- |
-| `variants/<name>/` 目录化（plan FS-8） | 📋 待开工 | `src/variants/panel/`、`src/variants/apache/`、`src/variants/ssh/`、`src/variants/docker/` | `core/` + `variants/<name>/` 可编译；`App.tsx` 通过路由别名挂载；4 个 `build:<variant>` 各自产出干净 dist | — |
-| merge-gate job 内追加（plan FS-7） | 🚧 进行中 | `frontend` job | PR #58 已包含部分修改 | — |
-| i18n 按 namespace 拆文件（plan FS-6） | 📋 待开工 | `src/i18n/locales/en.ts`（2310 行）、`zh.ts`（2309 行） | 拆为 `locales/<lang>/<namespace>.ts`；en/zh 各 2100 键；零调用方改 import；i18n 测试全绿 | 2~3 周 |
+| `variants/<name>/` 目录化（plan FS-8） | ✅ 已完成 | `src/variants/`、`package.json` | `core/` + `variants/<name>/` 可编译；`App.tsx` 通过路由别名挂载；`build:<variant>` 脚本已添加 | — |
+| merge-gate job 内追加（plan FS-7） | 🚧 进行中 | `frontend` job | PR #58 已包含部分修改；ci.yml YAML语法待修复 | — |
+| i18n 按 namespace 拆文件（plan FS-6） | ✅ 已完成 | `src/i18n/locales/en/`、`src/i18n/locales/zh/` | 拆为 `locales/<lang>/<namespace>.ts`；en/zh 各 namespace 文件；零调用方改 import | — |
 
 ### M2（1.0.0 周期后半）
 
@@ -133,8 +133,8 @@
 | 里程碑 | 版本 | 关键交付 | 状态 |
 | --- | --- | --- | --- |
 | M0 文档冻结 | 0.8.2 patch | DOC-0 全部文档落地 | ✅ 已完成 |
-| **M0 补丁** | **0.8.2 patch** | **FE 门禁 CI / BE PHP 8.3 / Panel 后端精简 / English Only patch** | **✅ 接近完成（PR #58 待合并）** |
-| M1 前置 | 1.0.0-pre.1 | schema 2 / merge-gate 软告警 / SSH-Docker 决策 | 📋 待开工 |
+| **M0 补丁** | **0.8.2 patch** | **FE 门禁 CI / BE PHP 8.3 / Panel 后端精简 / English Only patch** | **✅ 接近完成（PR #58 待合并，ci.yml YAML待修复）** |
+| **M1 前置** | **1.0.0-pre.1** | **i18n namespace / variants build scripts** | **✅ 已完成** |
 | M2 候选 | 1.0.0-rc.1 | Apache 移除 / chunk 拆分 / legacy token 下架 | 📋 待开工 |
 | **M3 发布** | **1.0.0** | **Panel + Apache tarball 签出** | **📋 待开工** |
 | M4 SSH | 0.9.0-Alpha | SSH daemon + 终端 | 📋 待开工 |
