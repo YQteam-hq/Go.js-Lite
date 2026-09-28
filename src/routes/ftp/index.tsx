@@ -17,7 +17,6 @@ import {
   Folder,
   Gauge,
   Users,
-  Clock,
   ToggleLeft,
   ToggleRight,
   Lock,
@@ -37,6 +36,8 @@ import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useFormat } from '@/lib/format'
 import { resolveErrorText } from '@/lib/errorMessages'
 import type { FtpAccount, FtpProvider, FtpAccountCreateInput, FtpAccountUpdateInput } from '@shared/types'
+import { MobileAccountCard } from './components/MobileAccountCard'
+import { accountStatus, homeDirDisplay, passwordStrength } from './utils'
 
 type ModalTab = 'general' | 'posix' | 'quota' | 'bandwidth'
 
@@ -60,28 +61,6 @@ function emptyForm(defaults: Partial<AccountForm> = {}): AccountForm {
     deny_client_ips: '',
     ...defaults,
   }
-}
-
-function passwordStrength(pw: string): { score: 0 | 1 | 2 | 3 | 4; label: string } {
-  if (!pw) return { score: 0, label: '' }
-  let score = 0
-  if (pw.length >= 8) score++
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++
-  if (/\d/.test(pw)) score++
-  if (/[^A-Za-z0-9]/.test(pw)) score++
-  const labels = ['ftp.pwWeak', 'ftp.pwFair', 'ftp.pwGood', 'ftp.pwStrong', 'ftp.pwStrong']
-  return { score: score as 0 | 1 | 2 | 3 | 4, label: labels[score] }
-}
-
-function accountStatus(acc: FtpAccount): { variant: 'success' | 'warning' | 'danger' | 'muted'; key: string } {
-  const now = Math.floor(Date.now() / 1000)
-  if (!acc.enabled) return { variant: 'muted', key: 'ftp.statusDisabled' }
-  if (acc.expires_at_ts && acc.expires_at_ts < now) return { variant: 'danger', key: 'ftp.statusExpired' }
-  return { variant: 'success', key: 'ftp.statusEnabled' }
-}
-
-function homeDirDisplay(path: string): string {
-  return path || '/'
 }
 
 export default function Ftp() {
@@ -1037,84 +1016,5 @@ export default function Ftp() {
         onCancel={() => setDeleteId(null)}
       />
     </div>
-  )
-}
-
-interface MobileCardProps {
-  acc: FtpAccount
-  onEdit: () => void
-  onReset: () => void
-  onTest: () => void
-  onDelete: () => void
-  t: (k: string) => string
-  formatRelativeTime: (ts: number) => string
-}
-
-function MobileAccountCard({ acc, onEdit, onReset, onTest, onDelete, t, formatRelativeTime }: MobileCardProps) {
-  const st = accountStatus(acc)
-  return (
-    <li className="p-4 space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
-            <Users size={16} />
-          </div>
-          <div className="min-w-0">
-            <div className="font-medium text-fg truncate">{acc.username}</div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <Badge variant={st.variant} className="text-[10px]">
-                {st.variant === 'success' ? 'Enabled' : st.variant === 'danger' ? 'Expired' : st.variant === 'warning' ? 'Warning' : 'Disabled'}
-              </Badge>
-              {acc.last_login_at && (
-                <span className="text-[10px] text-fg-subtle flex items-center gap-0.5">
-                  <Clock size={10} />
-                  {formatRelativeTime(acc.last_login_at)}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <div>
-          <div className="text-fg-subtle mb-0.5">{t('ftp.homeDir')}</div>
-          <div className="font-mono text-fg-muted truncate" title={acc.home_dir}>
-            {homeDirDisplay(acc.home_dir)}
-          </div>
-        </div>
-        <div>
-          <div className="text-fg-subtle mb-0.5">UID/GID</div>
-          <div className="text-fg-muted">{acc.uid ?? '—'} / {acc.gid ?? '—'}</div>
-        </div>
-        <div>
-          <div className="text-fg-subtle mb-0.5">{t('ftp.quotaSizeMb')}</div>
-          <div className="text-fg-muted">{acc.quota_size_mb ? `${acc.quota_size_mb} MB` : 'Unlimited'}</div>
-        </div>
-        <div>
-          <div className="text-fg-subtle mb-0.5">带宽</div>
-          <div className="text-fg-muted">
-            {(acc.upload_bw_kbps || acc.download_bw_kbps)
-              ? `↑${acc.upload_bw_kbps ?? '∞'} / ↓${acc.download_bw_kbps ?? '∞'}`
-              : 'Unlimited'}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-between pt-1 border-t border-border/50">
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon-sm" onClick={onTest}>
-            <LogIn size={13} />
-          </Button>
-          <Button variant="ghost" size="icon-sm" onClick={onEdit}>
-            <Pencil size={13} />
-          </Button>
-          <Button variant="ghost" size="icon-sm" onClick={onReset}>
-            <KeyRound size={13} />
-          </Button>
-        </div>
-        <Button variant="ghost" size="icon-sm" onClick={onDelete} className="text-danger hover:text-danger">
-          <Trash2 size={13} />
-        </Button>
-      </div>
-    </li>
   )
 }
