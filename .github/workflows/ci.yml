@@ -123,7 +123,7 @@ jobs:
         run: npm run typecheck
 
       - name: Lint
-        continue-on-error: true
+        
         run: npx eslint . --ext ts,tsx
 
       - name: Build
