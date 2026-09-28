@@ -123,8 +123,8 @@
 | `gojs-apache-1.0.0.tar.gz` | ⏳ 阻塞中 | — | 见 gojs-apache-1.0-tasks.md | — |
 | `gojs-ssh-0.9.0-alpha.tar.gz` | ⏳ 阻塞中 | — | 见 gojs-ssh-1.0-tasks.md；`continue-on-error: true` | — |
 | `gojs-docker-0.5.0-prototype.tar.gz` | ⏳ 阻塞中 | — | 见 gojs-docker-1.0-tasks.md；`continue-on-error: true` | — |
-| CHANGELOG 按四子版本分节汇总（plan BE-A3） | ⏳ 阻塞中 | `CHANGELOG.md` | 含 `### Go.js-Panel` / `### Go.js-Apache` / `### Go.js-SSH` / `### Go.js-Docker` 四小节 | — |
-| API v1 文档（OpenAPI 自动生成） | 📋 待开工 | `docs/api.md` | 1.0.0-pre.1 | — |
+| CHANGELOG 按四子版本分节汇总（plan BE-A3） | ✅ 已完成 | `CHANGELOG.md` | 含 `### Go.js-Panel` / `### Go.js-Apache` / `### Go.js-SSH` / `### Go.js-Docker` 四小节 | — |
+| API v1 文档 | ✅ 已存在 | `docs/api.md` | 文档已完整 | — |
 
 ---
 
