@@ -1,9 +1,19 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { locales } from '@/i18n';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { getLocale, loadLocale } from '@/i18n';
+import type { Translation } from '@/i18n';
 import { buildNavItems } from '@/lib/navigation';
 import { getDefaultCaps } from '@/stores/authStore';
+
+let en: Translation;
+let zh: Translation;
+
+beforeAll(async () => {
+  await loadLocale('en');
+  en = getLocale('en');
+  zh = getLocale('zh');
+});
 
 const SRC_ROOT = resolve(process.cwd(), 'src');
 const SKIPPED_DIRS = new Set(['__tests__', 'i18n']);
@@ -52,19 +62,19 @@ describe('translation key coverage', () => {
   });
 
   it('resolves every key in the english catalogue', () => {
-    const missing = Array.from(keys).filter((key) => !resolves(locales.en, key));
+    const missing = Array.from(keys).filter((key) => !resolves(en, key));
     expect(missing).toEqual([]);
   });
 
   it('resolves every key in the chinese catalogue', () => {
-    const missing = Array.from(keys).filter((key) => !resolves(locales.zh, key));
+    const missing = Array.from(keys).filter((key) => !resolves(zh, key));
     expect(missing).toEqual([]);
   });
 
   it('resolves every navigation label', () => {
     for (const item of buildNavItems({ caps: getDefaultCaps(), role: 'admin' })) {
-      expect(resolves(locales.en, item.labelKey), item.labelKey).toBe(true);
-      expect(resolves(locales.zh, item.labelKey), item.labelKey).toBe(true);
+      expect(resolves(en, item.labelKey), item.labelKey).toBe(true);
+      expect(resolves(zh, item.labelKey), item.labelKey).toBe(true);
     }
   });
 });

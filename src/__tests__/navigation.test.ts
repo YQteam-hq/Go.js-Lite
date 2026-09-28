@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { buildNavItems, filterCommands, isNavItemActive } from '@/lib/navigation';
 import { getDefaultCaps } from '@/stores/authStore';
-import { locales } from '@/i18n';
+import { getLocale, loadLocale } from '@/i18n';
 
 function walkKeys(value: unknown, prefix: string, out: Set<string>): void {
   if (value === null || typeof value !== 'object') {
@@ -14,7 +14,11 @@ function walkKeys(value: unknown, prefix: string, out: Set<string>): void {
 }
 
 const englishKeys = new Set<string>();
-walkKeys(locales.en, '', englishKeys);
+
+beforeAll(async () => {
+  await loadLocale('en');
+  walkKeys(getLocale('en'), '', englishKeys);
+});
 
 describe('buildNavItems', () => {
   it('keeps the routes unique', () => {

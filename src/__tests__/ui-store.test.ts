@@ -15,10 +15,10 @@ beforeEach(() => {
 });
 
 describe('preference normalization', () => {
-  it('rejects an unsupported language', () => {
-    useUiStore.getState().setLanguage('fr' as never);
+  it('rejects an unsupported language', async () => {
+    await useUiStore.getState().setLanguage('fr' as never);
     expect(useUiStore.getState().language).toBe('zh');
-    useUiStore.getState().setLanguage('en');
+    await useUiStore.getState().setLanguage('en');
     expect(useUiStore.getState().language).toBe('en');
   });
 
@@ -29,8 +29,8 @@ describe('preference normalization', () => {
     expect(useUiStore.getState().theme).toBe('dark');
   });
 
-  it('persists both preferences under the shared key', () => {
-    useUiStore.getState().setLanguage('en');
+  it('persists both preferences under the shared key', async () => {
+    await useUiStore.getState().setLanguage('en');
     useUiStore.getState().setTheme('dark');
     const raw = localStorage.getItem(UI_STORAGE_KEY);
     expect(raw).toBeTruthy();

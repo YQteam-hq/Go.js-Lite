@@ -1,8 +1,18 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ApiError } from '@/api/client';
-import { locales } from '@/i18n';
+import { getLocale, loadLocale } from '@/i18n';
+import type { Translation } from '@/i18n';
 import { useUiStore } from '@/stores/uiStore';
 import { errorCodeToI18nKey, resolveErrorText } from '@/lib/errorMessages';
+
+let zh: Translation;
+let en: Translation;
+
+beforeAll(async () => {
+  await loadLocale('en');
+  zh = getLocale('zh');
+  en = getLocale('en');
+});
 
 function lookup(source: unknown, path: string): string | undefined {
   let current: unknown = source;
@@ -39,8 +49,8 @@ describe('errorCodeToI18nKey', () => {
 
   it('points at a message that exists in both languages', () => {
     for (const path of Object.values(errorCodeToI18nKey)) {
-      expect(lookup(locales.zh, path), path).toBeTruthy();
-      expect(lookup(locales.en, path), path).toBeTruthy();
+      expect(lookup(zh, path), path).toBeTruthy();
+      expect(lookup(en, path), path).toBeTruthy();
     }
   });
 });
@@ -60,22 +70,22 @@ describe('resolveErrorText', () => {
 
   it('translates a known error code for the active language', () => {
     const error = new ApiError('unauthorized', 'Session expired', 401);
-    expect(resolveErrorText(error)).toBe(locales.zh.errors.unauthorized);
+    expect(resolveErrorText(error)).toBe(zh.errors.unauthorized);
 
     useUiStore.setState({ language: 'en' });
-    expect(resolveErrorText(error)).toBe(locales.en.errors.unauthorized);
+    expect(resolveErrorText(error)).toBe(en.errors.unauthorized);
   });
 
   it('translates a code derived from the http status', () => {
-    expect(resolveErrorText(new ApiError(404, 'gone'))).toBe(locales.zh.errors.notFound);
-    expect(resolveErrorText(new ApiError(429, 'slow down'))).toBe(locales.zh.errors.rateLimited);
-    expect(resolveErrorText(new ApiError(500, 'broken'))).toBe(locales.zh.errors.serverError);
+    expect(resolveErrorText(new ApiError(404, 'gone'))).toBe(zh.errors.notFound);
+    expect(resolveErrorText(new ApiError(429, 'slow down'))).toBe(zh.errors.rateLimited);
+    expect(resolveErrorText(new ApiError(500, 'broken'))).toBe(zh.errors.serverError);
   });
 
   it('translates transport level codes', () => {
-    expect(resolveErrorText({ code: 'network_error' })).toBe(locales.zh.errors.network);
-    expect(resolveErrorText({ code: 'aborted' })).toBe(locales.zh.errors.aborted);
-    expect(resolveErrorText({ code: 'timeout' })).toBe(locales.zh.errors.timeout);
+    expect(resolveErrorText({ code: 'network_error' })).toBe(zh.errors.network);
+    expect(resolveErrorText({ code: 'aborted' })).toBe(zh.errors.aborted);
+    expect(resolveErrorText({ code: 'timeout' })).toBe(zh.errors.timeout);
   });
 
   it('falls back to the message for an unknown code', () => {
@@ -98,8 +108,6 @@ describe('resolveErrorText', () => {
 
   it('falls back to chinese for an unsupported language', () => {
     useUiStore.setState({ language: 'fr' as never });
-    expect(resolveErrorText(new ApiError('forbidden', 'no', 403))).toBe(
-      locales.zh.errors.forbidden
-    );
+    expect(resolveErrorText(new ApiError('forbidden', 'no', 403))).toBe(zh.errors.forbidden);
   });
 });

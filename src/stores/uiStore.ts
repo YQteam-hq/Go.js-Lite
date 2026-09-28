@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ThemeMode, Language } from '@shared/types'
+import { loadLocale } from '@/i18n'
 import {
   UI_STORAGE_KEY,
   detectBrowserLanguage,
@@ -33,7 +34,7 @@ interface UiState {
   toasts: ToastItem[]
 
   setTheme: (theme: ThemeMode) => void
-  setLanguage: (lang: Language) => void
+  setLanguage: (lang: Language) => Promise<void>
   toggleSidebar: () => void
   setSidebar: (open: boolean) => void
   toggleSidebarCollapsed: () => void
@@ -68,7 +69,11 @@ export const useUiStore = create<UiState>()(
       toasts: [],
 
       setTheme: (theme) => set({ theme: normalizeTheme(theme) }),
-      setLanguage: (language) => set({ language: normalizeLanguage(language) }),
+      setLanguage: async (language) => {
+        const next = normalizeLanguage(language)
+        await loadLocale(next).catch(() => undefined)
+        set({ language: next })
+      },
       toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
       setSidebar: (open) => set({ sidebarOpen: open }),
       toggleSidebarCollapsed: () => {

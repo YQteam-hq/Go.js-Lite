@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import {
   formatBytes,
@@ -13,10 +13,20 @@ import {
   truncate,
   useFormat,
 } from '@/lib/format';
-import { locales } from '@/i18n';
+import { getLocale, loadLocale } from '@/i18n';
+import type { Translation } from '@/i18n';
 import { useUiStore } from '@/stores/uiStore';
 
 const NOW = Date.UTC(2024, 5, 15, 12, 0, 0);
+
+let zh: Translation;
+let en: Translation;
+
+beforeAll(async () => {
+  await loadLocale('en');
+  zh = getLocale('zh');
+  en = getLocale('en');
+});
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -212,16 +222,18 @@ describe('useFormat', () => {
     expect(result.current.formatNumber(1234567)).toBe(formatNumber(1234567, 'zh'));
     expect(result.current.formatBytes(1024)).toBe('1 KB');
     expect(result.current.formatDuration(61)).toBe('1m 1s');
-    expect(result.current.formatRelativeTime(NOW - 30_000)).toBe(locales.zh.common.justNow);
+    expect(result.current.formatRelativeTime(NOW - 30_000)).toBe(zh.common.justNow);
   });
 
-  it('follows a language switch', () => {
+  it('follows a language switch', async () => {
     useUiStore.setState({ language: 'zh' });
     const { result } = renderHook(() => useSubject());
 
-    act(() => useUiStore.getState().setLanguage('en'));
+    await act(async () => {
+      await useUiStore.getState().setLanguage('en');
+    });
 
     expect(result.current.formatDateShort(NOW)).toMatch(/^[A-Za-z]{3} \d{1,2}, \d{4}$/);
-    expect(result.current.formatRelativeTime(NOW - 30_000)).toBe(locales.en.common.justNow);
+    expect(result.current.formatRelativeTime(NOW - 30_000)).toBe(en.common.justNow);
   });
 });

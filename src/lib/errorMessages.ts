@@ -1,6 +1,5 @@
 import { useUiStore } from '@/stores/uiStore'
-import { locales } from '@/i18n'
-import type { LocaleKey } from '@/i18n'
+import { getLocale } from '@/i18n'
 import type { TranslationKey } from '@/hooks/useI18n'
 
 
@@ -51,7 +50,7 @@ export function resolveErrorText(err: unknown): string {
     const i18nKey = errorCodeToI18nKey[code]
     if (i18nKey) {
       const language = useUiStore.getState().language
-      const locale = locales[language as LocaleKey] ?? locales.zh
+      const locale = getLocale(language)
       const text = getNestedValue(locale, i18nKey)
       if (text) return text
     }
