@@ -133,8 +133,8 @@ function SSLChecker() {
     if (domains && domains.length > 0) {
       checkAll(domains)
     }
-    
-  }, [domains])
+
+  }, [domains, checkAll])
 
   const addMutation = useMutation({
     mutationFn: (domain: string) => sslApi.addDomain(domain),
@@ -170,7 +170,7 @@ function SSLChecker() {
       toast({ type: 'warning', title: t('ssl.domainRequired') })
       return
     }
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*(\.[a-zA-Z]{2,})?$/.test(domain)) {
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9\-.]*(\.[a-zA-Z]{2,})?$/.test(domain)) {
       toast({ type: 'warning', title: t('ssl.domainInvalid') })
       return
     }
@@ -1016,7 +1016,7 @@ function IssueCertModal({
   const domainValid = useMemo(() => {
     const d = domain.trim()
     if (!d) return false
-    return /^[a-zA-Z0-9][a-zA-Z0-9\-\.]*\.[a-zA-Z]{2,}$/.test(d)
+    return /^[a-zA-Z0-9][a-zA-Z0-9\-.]*\.[a-zA-Z]{2,}$/.test(d)
   }, [domain])
 
   const emailValid = useMemo(() => {
@@ -1130,7 +1130,7 @@ function IssueCertModal({
                   : 'border-border bg-bg text-fg-muted hover:border-border/80'
               }`}
             >
-              <div className="font-medium">Let's Encrypt Production</div>
+              <div className="font-medium">Let&apos;s Encrypt Production</div>
               <div className="text-xs opacity-70 mt-0.5">Real certificates, rate limits apply</div>
             </button>
             <button
@@ -1139,7 +1139,7 @@ function IssueCertModal({
               title="Staging environment - Coming soon"
               className="flex-1 px-3 py-2.5 rounded-xl text-sm border border-border bg-bg-sunken text-fg-subtle opacity-60 cursor-not-allowed"
             >
-              <div className="font-medium">Let's Encrypt Staging</div>
+              <div className="font-medium">Let&apos;s Encrypt Staging</div>
               <div className="text-xs mt-0.5">For testing, untrusted certs</div>
             </button>
           </div>

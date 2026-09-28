@@ -40,7 +40,7 @@ const mockCapabilities: Capabilities = {
   memoryLimit: 268435456,
 }
 
-let _fileStore: Map<string, FileEntry[]> = new Map()
+const _fileStore: Map<string, FileEntry[]> = new Map()
 let _fileStoreInitialized = false
 
 function delay<T>(data: T, ms = MOCK_DELAY): Promise<T> {

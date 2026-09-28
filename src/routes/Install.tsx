@@ -249,7 +249,7 @@ export default function Install() {
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className={`font-medium ${strengthTextColors[strengthLabel]}`}>
-                      {t(`install.strength${strengthLabel.charAt(0).toUpperCase() + strengthLabel.slice(1)}` as any) || t('install.weak')}
+                      {t(`install.strength${strengthLabel.charAt(0).toUpperCase() + strengthLabel.slice(1)}`) || t('install.weak')}
                     </span>
                     <span className="text-fg-subtle">{strengthScore}/4</span>
                   </div>
@@ -276,7 +276,7 @@ export default function Install() {
             <div className="space-y-2 py-2">
               <CheckPassword ok={passwordStrength.length} label={t('install.lengthRequirement')} />
               <CheckPassword ok={passwordStrength.upper && passwordStrength.lower} label={t('install.mixRequirement')} />
-              <CheckPassword ok={passwordStrength.number} label={t('install.numberRequirement') as any} />
+              <CheckPassword ok={passwordStrength.number} label={t('install.numberRequirement')} />
               <CheckPassword ok={passwordStrength.match} label={t('install.matchRequirement')} />
             </div>
 

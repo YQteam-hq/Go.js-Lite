@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { User, Save, Eye, EyeOff, Sun, Moon, Monitor, Check, Download } from 'lucide-react'
+import { User, Save, Eye, EyeOff, Sun, Moon, Monitor, Check, Download, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
@@ -30,7 +30,7 @@ export default function Profile() {
     queryFn: () => usersApi.profile.get(),
   })
 
-  const prefs: UserSettings | null = (profile?.preferences as any) || null
+  const prefs: UserSettings | null = profile?.preferences || null
 
   const [oldPw, setOldPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -42,9 +42,9 @@ export default function Profile() {
   useEffect(() => {
     const t2 = prefs?.theme
     if (t2 && (t2 === 'light' || t2 === 'dark' || t2 === 'system') && theme !== t2) {
-      setTheme(t2 as any)
+      setTheme(t2)
     }
-  }, [prefs?.theme])
+  }, [prefs?.theme, theme, setTheme])
 
   const updatePrefsMutation = useMutation({
     mutationFn: (payload: Partial<UserSettings>) => usersApi.profile.update(payload),
@@ -97,12 +97,12 @@ export default function Profile() {
   })
 
   const handleSaveTheme = (next: 'light' | 'dark' | 'system') => {
-    setTheme(next as any)
+    setTheme(next)
     updatePrefsMutation.mutate({ theme: next })
   }
 
   const handleSaveLanguage = (next: 'zh' | 'en') => {
-    setLanguage(next as any)
+    setLanguage(next)
     updatePrefsMutation.mutate({ language: next })
   }
 
@@ -126,7 +126,7 @@ export default function Profile() {
   const role = profile?.role || 'admin'
   const color = profile?.avatar_color || pickAvatarColor(username)
 
-  const themeOptions: Array<{ value: 'light' | 'dark' | 'system'; label: string; icon: any }> = [
+  const themeOptions: Array<{ value: 'light' | 'dark' | 'system'; label: string; icon: LucideIcon }> = [
     { value: 'light', label: t('settings.light'), icon: Sun },
     { value: 'dark',  label: t('settings.dark'),  icon: Moon },
     { value: 'system', label: t('settings.system'), icon: Monitor },

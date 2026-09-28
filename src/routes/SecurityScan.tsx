@@ -152,7 +152,7 @@ function VulnTable({ vulns }: { vulns: SecurityVulnItem[] }) {
                 </td>
                 <td className="px-3 py-2.5">
                   <Badge variant={v.severityBadgeVariant as 'danger' | 'warning' | 'muted' | 'accent' | 'success'}>
-                    {t(`secscan.severity${v.severity.charAt(0).toUpperCase() + v.severity.slice(1)}` as any) ?? v.severity}
+                    {t(`secscan.severity${v.severity.charAt(0).toUpperCase() + v.severity.slice(1)}`) ?? v.severity}
                   </Badge>
                 </td>
                 <td className="px-3 py-2.5 text-fg max-w-xs truncate" title={v.title}>
@@ -201,7 +201,7 @@ function VulnTable({ vulns }: { vulns: SecurityVulnItem[] }) {
                 variant={v.severityBadgeVariant as 'danger' | 'warning' | 'muted' | 'accent' | 'success'}
                 className="shrink-0"
               >
-                {t(`secscan.severity${v.severity.charAt(0).toUpperCase() + v.severity.slice(1)}` as any) ?? v.severity}
+                {t(`secscan.severity${v.severity.charAt(0).toUpperCase() + v.severity.slice(1)}`) ?? v.severity}
               </Badge>
             </div>
             {v.title && (

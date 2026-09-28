@@ -12,6 +12,7 @@ import ftp from './ftp';
 import users from './users';
 import web from './web';
 import php from './php';
+import variants from './variants';
 
 const en: Translation = {
   ...common,
@@ -27,6 +28,7 @@ const en: Translation = {
   ...users,
   ...web,
   ...php,
+  ...variants,
 };
 
 export default en;

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { toast } from '@/components/ui/Toast'
 import { useI18n } from '@/hooks/useI18n'
-import { notificationChannelsApi, type ChannelTestResult } from '@/api/notifications'
+import { notificationChannelsApi, type ChannelTestResult, type NotificationChannelCreateInput } from '@/api/notifications'
 import type { NotificationChannel, NotificationChannelType } from '@shared/types'
 
 type ChannelFormState = Partial<{
@@ -125,14 +125,12 @@ export function ChannelModal({ open, onClose, initial }: ChannelModalProps) {
   const testMutation = useMutation({
     mutationFn: async () => {
       if (!initial) {
-        const base: any = {
+        const base = {
+          ...form,
           name: form.name || `tmp-${Date.now()}`,
           type: form.type!,
           enabled: true,
-        }
-        for (const [k, v] of Object.entries(form)) {
-          if (v !== undefined) base[k] = v
-        }
+        } as NotificationChannelCreateInput
         const tmp = await notificationChannelsApi.create(base)
         try {
           return await notificationChannelsApi.test(tmp.id)

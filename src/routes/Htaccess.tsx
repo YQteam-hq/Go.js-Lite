@@ -1,4 +1,4 @@
-import { useState, Suspense, lazy, useEffect, useMemo } from 'react'
+import { useState, Suspense, lazy, useEffect, useMemo, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, RotateCcw, FileText, AlertTriangle, Wand2, Check } from 'lucide-react'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
@@ -90,9 +90,9 @@ export default function Htaccess() {
     },
   })
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     saveMutation.mutate(content)
-  }
+  }, [saveMutation, content])
 
   const handleToggleRule = (id: HtaccessRuleType) => {
     setSelectedRules((prev) => {
@@ -150,8 +150,8 @@ export default function Htaccess() {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-    
-  }, [content, saveMutation.isPending])
+
+  }, [content, saveMutation.isPending, handleSave])
 
   const ruleItems = useMemo(
     () =>

@@ -69,7 +69,7 @@ export function useAuthBootstrap() {
 }
 
 export function useAuth() {
-  const { authenticated, user, backendVersion, frontendVersion } = useAuthStore()
+  const { authenticated, user, backendVersion, frontendVersion, deprecations } = useAuthStore()
   const reset = useAuthStore((s) => s.reset)
 
   const logout = useCallback(async () => {
@@ -101,6 +101,7 @@ export function useAuth() {
     user,
     backendVersion,
     frontendVersion,
+    deprecations,
     login,
     logout,
   }

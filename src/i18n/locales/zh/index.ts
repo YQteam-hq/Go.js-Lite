@@ -11,6 +11,7 @@ import ftp from './ftp';
 import users from './users';
 import web from './web';
 import php from './php';
+import variants from './variants';
 
 const zh = {
   ...common,
@@ -26,6 +27,7 @@ const zh = {
   ...users,
   ...web,
   ...php,
+  ...variants,
 };
 
 export type Translation = typeof zh;

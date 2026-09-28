@@ -13,14 +13,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Play, RotateCcw, History } from 'lucide-react'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
-
-interface CommandHistory {
-  id: string
-  command: string
-  output: string
-  success: boolean
-  timestamp: number
-}
+import { webshellApi } from '@/api/webshell'
 
 export default function WebShell() {
   const { t } = useI18n()
@@ -34,51 +27,25 @@ export default function WebShell() {
 
   const { data: history, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useQuery({
     queryKey: ['webshell', 'history'],
-    queryFn: async () => {
-      const response = await fetch('/gojs/api/webshell/history')
-      if (!response.ok) throw new Error('Failed to fetch history')
-      return response.json()
-    }
+    queryFn: () => webshellApi.history(),
   })
 
   const executeMutation = useMutation({
-    mutationFn: async (cmd: string) => {
-      const response = await fetch('/gojs/api/webshell/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command: cmd })
-      })
-      if (!response.ok) {
-        const errData = await response.json().catch(() => null)
-        const errBody = errData?.error && typeof errData.error === 'object' ? errData.error : errData
-        const err = new Error(errBody?.message || t('webshell.executeFailed'))
-        if (errBody?.code) Object.assign(err, { code: errBody.code })
-        throw err
-      }
-      return response.json()
-    },
+    mutationFn: (cmd: string) => webshellApi.execute(cmd),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['webshell', 'history'] })
     }
   })
 
   const clearHistoryMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/gojs/api/webshell/clear-history', { method: 'POST' })
-      if (!response.ok) throw new Error('Failed to clear history')
-      return response.json()
-    },
+    mutationFn: () => webshellApi.clearHistory(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['webshell', 'history'] })
     }
   })
 
   const autocompleteMutation = useMutation({
-    mutationFn: async (input: string) => {
-      const response = await fetch(`/gojs/api/webshell/autocomplete?input=${encodeURIComponent(input)}`)
-      if (!response.ok) throw new Error('Failed to get autocomplete')
-      return response.json()
-    }
+    mutationFn: (input: string) => webshellApi.autocomplete(input),
   })
 
   useEffect(() => {
@@ -136,7 +103,7 @@ export default function WebShell() {
   useEffect(() => {
     if (terminal && history) {
       terminal.clear()
-      history.forEach((item: CommandHistory) => {
+      history.forEach((item) => {
         terminal.write(`\r\n$ ${item.command}\r\n`)
         terminal.write(`${item.output}\r\n`)
       })
@@ -274,7 +241,7 @@ export default function WebShell() {
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {Array.isArray(history) && history.length > 0 ? (
-                  history.slice().reverse().map((item: CommandHistory) => (
+                  history.slice().reverse().map((item) => (
                     <div
                       key={item.id}
                       className="p-3 rounded-lg border bg-card"

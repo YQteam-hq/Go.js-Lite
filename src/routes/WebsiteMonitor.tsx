@@ -7,108 +7,46 @@ import { Badge } from '@/components/ui/Badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Plus, Trash2, Play, AlertTriangle, CheckCircle, XCircle, Settings, BarChart3 } from 'lucide-react'
 import { useI18n } from '@/hooks/useI18n'
-
-interface WebsiteConfig {
-  websites: Array<{
-    id: string
-    name: string
-    url: string
-    enabled: boolean
-    timeout: number
-    notifications: boolean
-  }>
-  check_interval: number
-}
-
-interface MonitorHistory {
-  website_id: string
-  url: string
-  timestamp: number
-  status: string
-  response_time: number
-  status_code: number
-  error: string | null
-  content_size: number
-}
-
-interface Notification {
-  id: string
-  website_id: string
-  website_name: string
-  url: string
-  status: string
-  status_code: number
-  response_time: number
-  error: string | null
-  timestamp: number
-  sent: boolean
-  acknowledged?: boolean
-  acknowledged_at?: number
-}
+import {
+  websiteMonitorApi,
+  type WebsiteMonitorConfig as WebsiteConfig,
+  type WebsiteMonitorHistoryEntry as MonitorHistory,
+  type WebsiteMonitorNotification as Notification,
+  type WebsiteMonitorTarget as WebsiteTarget,
+} from '@/api/websiteMonitor'
 
 export default function WebsiteMonitor() {
   const { t } = useI18n()
   const [config, setConfig] = useState<WebsiteConfig>({ websites: [], check_interval: 60 })
-  const [editingWebsite, setEditingWebsite] = useState<{
-    id: string
-    name: string
-    url: string
-    enabled: boolean
-    timeout: number
-    notifications: boolean
-  } | null>(null)
+  const [editingWebsite, setEditingWebsite] = useState<WebsiteTarget | null>(null)
   const [activeTab, setActiveTab] = useState<'websites' | 'history' | 'notifications'>('websites')
   
   const queryClient = useQueryClient()
 
   const { data: monitorConfig } = useQuery({
     queryKey: ['website-monitor', 'config'],
-    queryFn: async () => {
-      const response = await fetch('/api/website-monitor/config')
-      if (!response.ok) throw new Error('Failed to fetch config')
-      return response.json()
-    }
+    queryFn: () => websiteMonitorApi.config(),
   })
 
   const { data: history, isLoading: historyLoading } = useQuery({
     queryKey: ['website-monitor', 'history'],
-    queryFn: async () => {
-      const response = await fetch('/api/website-monitor/history')
-      if (!response.ok) throw new Error('Failed to fetch history')
-      return response.json()
-    }
+    queryFn: () => websiteMonitorApi.history(),
   })
 
   const { data: notifications, isLoading: notificationsLoading } = useQuery({
     queryKey: ['website-monitor', 'notifications'],
-    queryFn: async () => {
-      const response = await fetch('/api/website-monitor/notifications')
-      if (!response.ok) throw new Error('Failed to fetch notifications')
-      return response.json()
-    }
+    queryFn: () => websiteMonitorApi.notifications(),
   })
 
   const updateConfigMutation = useMutation({
-    mutationFn: async (newConfig: WebsiteConfig) => {
-      const response = await fetch('/api/website-monitor/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newConfig)
-      })
-      if (!response.ok) throw new Error('Failed to update config')
-      return response.json()
-    },
+    mutationFn: (newConfig: WebsiteConfig) => websiteMonitorApi.updateConfig(newConfig),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['website-monitor', 'config'] })
     }
   })
 
   const runCheckMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/website-monitor/run-check', { method: 'POST' })
-      if (!response.ok) throw new Error('Failed to run check')
-      return response.json()
-    },
+    mutationFn: () => websiteMonitorApi.runCheck(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['website-monitor', 'history'] })
       queryClient.invalidateQueries({ queryKey: ['website-monitor', 'notifications'] })
@@ -116,24 +54,14 @@ export default function WebsiteMonitor() {
   })
 
   const clearNotificationsMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/website-monitor/clear-notifications', { method: 'POST' })
-      if (!response.ok) throw new Error('Failed to clear notifications')
-      return response.json()
-    },
+    mutationFn: () => websiteMonitorApi.clearNotifications(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['website-monitor', 'notifications'] })
     }
   })
 
   const acknowledgeNotificationMutation = useMutation({
-    mutationFn: async (notificationId: string) => {
-      const response = await fetch(`/api/website-monitor/notifications/${notificationId}`, {
-        method: 'PATCH'
-      })
-      if (!response.ok) throw new Error('Failed to acknowledge notification')
-      return response.json()
-    },
+    mutationFn: (notificationId: string) => websiteMonitorApi.acknowledgeNotification(notificationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['website-monitor', 'notifications'] })
     }

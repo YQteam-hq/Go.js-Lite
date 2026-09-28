@@ -22,7 +22,7 @@ export default function Settings() {
   const { theme, setTheme } = useTheme()
   const language = useUiStore((s) => s.language)
   const setLanguage = useUiStore((s) => s.setLanguage)
-  const { user, backendVersion, frontendVersion } = useAuth()
+  const { user, backendVersion, frontendVersion, deprecations } = useAuth()
   const queryClient = useQueryClient()
 
   const [oldPassword, setOldPassword] = useState('')
@@ -326,6 +326,49 @@ export default function Settings() {
         <p className="text-sm text-fg-muted mt-0.5">{t('settings.subtitle')}</p>
       </div>
 
+      {deprecations.length > 0 && (
+        <Card className="stagger-1 border-warning/30">
+          <CardHeader className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-warning/10 text-warning flex items-center justify-center">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-fg">{t('settings.deprecationsTitle')}</div>
+              <div className="text-xs text-fg-subtle">{t('settings.deprecationsSubtitle')}</div>
+            </div>
+          </CardHeader>
+          <CardBody className="space-y-3">
+            {deprecations.map((notice) => (
+              <div
+                key={notice.id}
+                className="rounded-lg border border-warning/30 bg-warning/5 p-3 space-y-1.5"
+              >
+                <div className="text-sm font-medium text-fg">{notice.feature}</div>
+                <p className="text-xs text-fg-muted">{notice.message}</p>
+                <div className="text-xs text-fg-subtle break-all">
+                  <code>{notice.target}</code>
+                  <span className="mx-1.5">→</span>
+                  <code className="text-fg-muted">{notice.replacement}</code>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                  <span className="text-xs text-warning">
+                    {t('settings.deprecationsRemoval', { version: notice.removeIn })}
+                  </span>
+                  <a
+                    href={notice.docs}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-accent hover:underline"
+                  >
+                    {t('settings.deprecationsDocs')}
+                  </a>
+                </div>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+      )}
+
       <Card className="stagger-2 card-hover">
         <CardHeader className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
@@ -591,7 +634,11 @@ export default function Settings() {
                     passwordStrength.label === 'strong' ? 'text-success' :
                     'text-fg-subtle'
                   }>
-                    {passwordStrength.score > 0 ? t(`install.strength${passwordStrength.label.charAt(0).toUpperCase() + passwordStrength.label.slice(1)}` as any) : ''}
+                    {passwordStrength.score > 0
+                      ? t(
+                          `install.strength${passwordStrength.label.charAt(0).toUpperCase()}${passwordStrength.label.slice(1)}`,
+                        )
+                      : ''}
                   </span>
                   <span className="text-fg-subtle">{passwordStrength.score}/4</span>
                 </div>
