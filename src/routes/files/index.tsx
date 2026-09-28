@@ -1,17 +1,13 @@
-import { useState, useMemo, useRef, useCallback, useEffect, memo } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   FolderOpen,
   FileText,
-  Image,
-  FileCode,
-  File,
   ChevronRight,
   Search,
   Plus,
   Upload,
-  MoreVertical,
   ArrowUpDown,
   Trash2,
   Edit3,
@@ -39,10 +35,8 @@ import { DropdownMenu, MenuItem } from '@/components/ui/DropdownMenu'
 import { UploadProgress, useUploadManager } from '@/components/ui/UploadProgress'
 import { filesApi } from '@/api/files'
 import { TrashModal } from '@/components/trash/TrashModal'
-import { useFormat, getFileExtension, isImageFile, isTextFile } from '@/lib/format'
 import { validateFileName } from '@/lib/validate'
 import type { FileEntry } from '@shared/types'
-import { useLongPress } from '@/hooks/useLongPress'
 import { useUiStore } from '@/stores/uiStore'
 import { toast } from '@/components/ui/Toast'
 import { useI18n } from '@/hooks/useI18n'
@@ -55,23 +49,24 @@ import {
   renameEntry,
   type FileListPayload,
 } from '@/lib/optimistic'
-
-type SortField = 'name' | 'size' | 'mtime'
-type SortOrder = 'asc' | 'desc'
-type ViewMode = 'list' | 'grid'
-
-const FILE_ROW_HEIGHT = 48
-const FILE_CELL_HEIGHT = 116
-const FILE_GRID_GAP = 12
-const VIRTUAL_THRESHOLD = 60
-
-type NewItemType = 'file' | 'folder' | null
-
-interface ContextMenuState {
-  x: number
-  y: number
-  file: FileEntry
-}
+import { FileRow, FileGridItem } from './components'
+import { getFileKey, permsToSymbolic } from './utils'
+import {
+  FILE_ROW_HEIGHT,
+  FILE_CELL_HEIGHT,
+  FILE_GRID_GAP,
+  VIRTUAL_THRESHOLD,
+} from './constants'
+import type {
+  SortField,
+  SortOrder,
+  ViewMode,
+  NewItemType,
+  ContextMenuState,
+  PathPickerState,
+  ChmodModalState,
+  DeleteConfirmState,
+} from './types'
 
 export default function FileList() {
   const { t } = useI18n()
@@ -100,10 +95,7 @@ export default function FileList() {
   const [renaming, setRenaming] = useState(false)
   const renameInputRef = useRef<HTMLInputElement>(null)
 
-  const [deleteConfirm, setDeleteConfirm] = useState<{
-    open: boolean
-    files: FileEntry[]
-  }>({ open: false, files: [] })
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState>({ open: false, files: [] })
   const [deleting, setDeleting] = useState(false)
   const [showTrash, setShowTrash] = useState(false)
 
@@ -118,21 +110,21 @@ export default function FileList() {
   const uploadManager = useUploadManager()
   const [exitingIds, setExitingIds] = useState<Set<string>>(new Set())
 
-  const [pathPicker, setPathPicker] = useState<{
-    open: boolean
-    mode: 'copy' | 'move'
-    file: FileEntry | null
-    target: string
-    error: string
-  }>({ open: false, mode: 'copy', file: null, target: '', error: '' })
+  const [pathPicker, setPathPicker] = useState<PathPickerState>({
+    open: false,
+    mode: 'copy',
+    file: null,
+    target: '',
+    error: '',
+  })
   const [pathPickerLoading, setPathPickerLoading] = useState(false)
 
-  const [chmodModal, setChmodModal] = useState<{
-    open: boolean
-    file: FileEntry | null
-    mode: string
-    error: string
-  }>({ open: false, file: null, mode: '', error: '' })
+  const [chmodModal, setChmodModal] = useState<ChmodModalState>({
+    open: false,
+    file: null,
+    mode: '',
+    error: '',
+  })
   const [chmodLoading, setChmodLoading] = useState(false)
 
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -1226,206 +1218,6 @@ export default function FileList() {
       </BottomSheet>
     </div>
   )
-}
-
-type FileItemHandlers = {
-  onToggleSelect: (path: string) => void
-  onContextMenu: (e: React.MouseEvent, file: FileEntry) => void
-  onMoreActions: (e: React.MouseEvent, file: FileEntry) => void
-  onOpen: (file: FileEntry) => void
-}
-
-type FileItemProps = FileItemHandlers & {
-  file: FileEntry
-  selected: boolean
-  exiting: boolean
-}
-
-const FileRow = memo(function FileRow({
-  file,
-  selected,
-  exiting,
-  onToggleSelect,
-  onContextMenu,
-  onMoreActions,
-  onOpen,
-}: FileItemProps) {
-  const { t } = useI18n()
-  const { formatDate, formatBytes } = useFormat()
-  const handleLongPress = useCallback(
-    () => onToggleSelect(file.path),
-    [onToggleSelect, file.path],
-  )
-  const { handlers, active } = useLongPress<HTMLDivElement>(handleLongPress, {
-    delay: 400,
-  })
-
-  const Icon = getFileIcon(file)
-  const animationClass = exiting ? 'animate-list-exit' : ''
-
-  return (
-    <div
-      {...handlers}
-      onContextMenu={(e) => onContextMenu(e, file)}
-      className={`
-        h-full w-full flex items-center gap-3 px-3 md:px-4
-        transition-colors cursor-pointer
-        ${selected ? 'bg-accent/10' : 'hover:bg-fg/5'}
-        ${active ? 'bg-bg-sunken' : ''}
-        ${animationClass}
-      `}
-    >
-      {selected && (
-        <div className="w-5 h-5 rounded border-2 border-accent bg-accent flex items-center justify-center shrink-0">
-          <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-accent-fg">
-            <path d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z" />
-          </svg>
-        </div>
-      )}
-
-      <div
-        className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${
-          file.type === 'dir' ? 'bg-accent/10 text-accent' : 'bg-bg-sunken text-fg-muted'
-        }`}
-      >
-        <Icon size={18} />
-      </div>
-
-      <div className="flex-1 min-w-0" onClick={!selected ? () => onOpen(file) : undefined}>
-        <span
-          className="text-sm text-fg truncate block hover:text-accent transition-colors"
-        >
-          {file.name}
-        </span>
-        <div className="flex items-center gap-3 text-xs text-fg-subtle mt-0.5 md:hidden">
-          <span>{formatBytes(file.size)}</span>
-          <span>{formatDate(file.mtime)}</span>
-        </div>
-      </div>
-
-      <div className="hidden md:block w-24 text-right text-sm text-fg-muted">
-        {file.type === 'dir' ? '—' : formatBytes(file.size)}
-      </div>
-
-      <div className="hidden lg:block w-36 text-right text-xs text-fg-subtle">
-        {formatDate(file.mtime)}
-      </div>
-
-      <div className="hidden md:block w-10 text-right text-xs text-fg-subtle font-mono">
-        {file.perms}
-      </div>
-
-      <div className="flex justify-end md:w-10 md:block">
-        <button
-          className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center justify-center p-1.5 rounded-md text-fg-subtle hover:text-fg hover:bg-bg-sunken transition-colors"
-          onClick={(e) => onMoreActions(e, file)}
-          aria-label={t('files.moreActions')}
-        >
-          <MoreVertical size={16} />
-        </button>
-      </div>
-    </div>
-  )
-})
-
-const FileGridItem = memo(function FileGridItem({
-  file,
-  selected,
-  exiting,
-  onToggleSelect,
-  onContextMenu,
-  onMoreActions,
-  onOpen,
-}: FileItemProps) {
-  const { t } = useI18n()
-  const { formatBytes } = useFormat()
-  const handleLongPress = useCallback(
-    () => onToggleSelect(file.path),
-    [onToggleSelect, file.path],
-  )
-  const { handlers, active } = useLongPress<HTMLDivElement>(handleLongPress, {
-    delay: 400,
-  })
-
-  const Icon = getFileIcon(file)
-  const animationClass = exiting ? 'animate-list-exit' : ''
-
-  return (
-    <div
-      {...handlers}
-      onContextMenu={(e) => onContextMenu(e, file)}
-      className={`
-        relative h-full w-full flex flex-col items-center justify-start gap-2 p-3 rounded-lg
-        transition-all duration-150 cursor-pointer
-        ${selected ? 'bg-accent/10 ring-2 ring-accent/30' : 'hover:bg-fg/5'}
-        ${active ? 'bg-bg-sunken' : ''}
-        ${animationClass}
-      `}
-      onClick={!selected ? () => onOpen(file) : undefined}
-    >
-      {selected && (
-        <div className="absolute top-2 right-2 w-5 h-5 rounded border-2 border-accent bg-accent flex items-center justify-center z-10">
-          <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-accent-fg">
-            <path d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z" />
-          </svg>
-        </div>
-      )}
-
-      <div
-        className={`
-          w-14 h-14 rounded-lg flex items-center justify-center shrink-0
-          ${file.type === 'dir' ? 'bg-accent/10 text-accent' : 'bg-bg-sunken text-fg-muted'}
-        `}
-      >
-        <Icon size={28} />
-      </div>
-
-      <div className="w-full text-center">
-        <span className="text-xs text-fg truncate block leading-tight">
-          {file.name}
-        </span>
-        <span className="text-[10px] text-fg-subtle block mt-0.5">
-          {file.type === 'dir' ? t('files.folder') : formatBytes(file.size)}
-        </span>
-      </div>
-
-      <button
-        className="absolute bottom-1 right-1 p-1 rounded-md text-fg-subtle hover:text-fg hover:bg-bg-sunken transition-colors opacity-0 hover:opacity-100"
-        onClick={(e) => {
-          e.stopPropagation()
-          onMoreActions(e, file)
-        }}
-        aria-label={t('files.moreActions')}
-      >
-        <MoreVertical size={14} />
-      </button>
-    </div>
-  )
-})
-
-const getFileKey = (file: FileEntry) => file.path
-
-function getFileIcon(file: FileEntry) {
-  if (file.type === 'dir') return FolderOpen
-  if (isImageFile(file.name)) return Image
-  const ext = getFileExtension(file.name)
-  if (['php', 'js', 'ts', 'tsx', 'css', 'html', 'json', 'sql', 'py'].includes(ext)) return FileCode
-  if (isTextFile(file.name)) return FileText
-  return File
-}
-
-function permsToSymbolic(perms: string, isDir: boolean): string {
-  let mode = perms
-  if (mode.length === 4) mode = mode.slice(1)
-  if (mode.length !== 3 || !/^[0-7]{3}$/.test(mode)) return perms
-  const chars = 'rwxrwxrwx'
-  let result = isDir ? 'd' : '-'
-  for (let i = 0; i < 9; i++) {
-    const octalDigit = parseInt(mode[Math.floor(i / 3)], 10)
-    const bit = octalDigit & (1 << (2 - (i % 3)))
-    result += bit ? chars[i] : '-'
-  }
-  return result
 }
 
 export { FileList }
