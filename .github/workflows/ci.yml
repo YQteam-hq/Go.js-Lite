@@ -162,7 +162,7 @@ jobs:
           POLL_INTERVAL: 15
         run: |
           set -u
-          gate_names=("English Only" "PR Review")
+          gate_names=("English Only" "review")
           for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
             report=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/check-runs" --paginate --jq '.check_runs[] | [.name, .status, (.conclusion // "")] | @tsv' 2>/dev/null || true)
             pending=0
