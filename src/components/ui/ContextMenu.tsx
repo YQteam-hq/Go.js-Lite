@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import {
   FolderOpen,
   FileText,
@@ -12,6 +12,7 @@ import {
   Archive,
 } from 'lucide-react'
 import type { FileEntry } from '@shared/types'
+import { useMenuNavigation } from '@/hooks/useMenuNavigation'
 
 interface ContextMenuProps {
   x: number
@@ -54,7 +55,12 @@ export function ContextMenu({
   canTargz,
   t,
 }: ContextMenuProps) {
-  const menuRef = useRef<HTMLDivElement>(null)
+  const { menuRef, handleKeyDown } = useMenuNavigation<HTMLDivElement>({ open: true, onClose })
+  // Captured during the first render, before the menu moves the focus, so the
+  // focus can go back to the element the user was on when the menu opened.
+  const [restoreTarget] = useState<HTMLElement | null>(
+    () => document.activeElement as HTMLElement | null,
+  )
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -62,16 +68,15 @@ export function ContextMenu({
         onClose()
       }
     }
-    const escHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
     document.addEventListener('mousedown', handler)
-    document.addEventListener('keydown', escHandler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuRef, onClose])
+
+  useEffect(() => {
     return () => {
-      document.removeEventListener('mousedown', handler)
-      document.removeEventListener('keydown', escHandler)
+      restoreTarget?.focus?.({ preventScroll: true })
     }
-  }, [onClose])
+  }, [restoreTarget])
 
   const adjustedX = Math.min(x, window.innerWidth - 220)
   const adjustedY = Math.min(y, window.innerHeight - 400)
@@ -93,8 +98,12 @@ export function ContextMenu({
       className="fixed z-50 min-w-[200px] bg-bg-elevated border border-border rounded-lg shadow-xl py-1 animate-scale-in origin-top-left"
       style={{ left: adjustedX, top: adjustedY }}
       role="menu"
+      aria-orientation="vertical"
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
     >
       <button
+        type="button"
         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-fg hover:bg-bg-sunken transition-colors text-left"
         onClick={() => {
           onOpen()
@@ -109,6 +118,7 @@ export function ContextMenu({
       <div className="my-1 h-px bg-border" />
 
       <button
+        type="button"
         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-fg hover:bg-bg-sunken transition-colors text-left"
         onClick={() => {
           onRename()
@@ -121,6 +131,7 @@ export function ContextMenu({
       </button>
 
       <button
+        type="button"
         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-fg hover:bg-bg-sunken transition-colors text-left"
         onClick={() => {
           onCopy()
@@ -133,6 +144,7 @@ export function ContextMenu({
       </button>
 
       <button
+        type="button"
         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-fg hover:bg-bg-sunken transition-colors text-left"
         onClick={() => {
           onMove()
@@ -205,6 +217,7 @@ export function ContextMenu({
       <div className="my-1 h-px bg-border" />
 
       <button
+        type="button"
         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-fg hover:bg-bg-sunken transition-colors text-left"
         onClick={() => {
           onDownload()
@@ -217,6 +230,7 @@ export function ContextMenu({
       </button>
 
       <button
+        type="button"
         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-fg hover:bg-bg-sunken transition-colors text-left"
         onClick={() => {
           onPermissions()
@@ -231,6 +245,7 @@ export function ContextMenu({
       <div className="my-1 h-px bg-border" />
 
       <button
+        type="button"
         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-danger hover:bg-danger/10 transition-colors text-left"
         onClick={() => {
           onDelete()

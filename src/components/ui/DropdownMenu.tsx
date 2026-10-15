@@ -1,7 +1,20 @@
-import { useState, useRef, useEffect, type ReactNode } from 'react'
+import {
+  cloneElement,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from './Button'
 import { useIsMobile } from '@/hooks/useMediaQuery'
+import { useMenuNavigation } from '@/hooks/useMenuNavigation'
 
 interface DropdownMenuProps {
   trigger: ReactNode
@@ -9,9 +22,27 @@ interface DropdownMenuProps {
   align?: 'left' | 'right'
 }
 
+interface TriggerInjectedProps {
+  onClick?: (event: ReactMouseEvent) => void
+  onKeyDown?: (event: ReactKeyboardEvent) => void
+}
+
 export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMenuProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
+  const menuId = useId()
+
+  const closeWithTriggerFocus = useCallback(() => {
+    setOpen(false)
+    // Send the focus back to the trigger so keyboard users keep their place.
+    triggerRef.current?.focus({ preventScroll: true })
+  }, [])
+
+  const { menuRef, handleKeyDown } = useMenuNavigation<HTMLDivElement>({
+    open,
+    onClose: closeWithTriggerFocus,
+  })
 
   useEffect(() => {
     if (!open) return
@@ -24,17 +55,54 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
+  const injected: TriggerInjectedProps & Record<string, unknown> = {
+    onClick: (event: ReactMouseEvent) => {
+      event.preventDefault()
+      setOpen((previous) => !previous)
+    },
+    onKeyDown: (event: ReactKeyboardEvent) => {
+      // Arrow keys open the menu as well, matching the native select behavior.
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault()
+        setOpen(true)
+      }
+    },
+    'aria-haspopup': 'menu',
+    'aria-expanded': open,
+    'aria-controls': open ? menuId : undefined,
+  }
+
+  // The trigger keeps its own markup and receives the widget props, which
+  // avoids nesting a button inside another button.
+  const triggerNode = isValidElement(trigger) ? (
+    cloneElement(trigger as ReactElement<Record<string, unknown>>, {
+      ...injected,
+      ref: (node: HTMLElement | null) => {
+        triggerRef.current = node
+      },
+    })
+  ) : (
+    <button type="button" ref={triggerRef as React.Ref<HTMLButtonElement>} {...injected}>
+      {trigger}
+    </button>
+  )
+
   return (
     <div ref={containerRef} className="relative">
-      <div onClick={() => setOpen(!open)}>{trigger}</div>
+      {triggerNode}
       {open && (
         <div
+          ref={menuRef}
+          id={menuId}
+          role="menu"
+          tabIndex={-1}
+          aria-orientation="vertical"
+          onKeyDown={handleKeyDown}
           className={`
             absolute z-40 mt-2 min-w-[180px] bg-bg-elevated border border-border
             rounded-lg shadow-xl py-1 animate-scale-in origin-top-right
             ${align === 'right' ? 'right-0' : 'left-0'}
           `}
-          role="menu"
         >
           {children}
         </div>
@@ -55,6 +123,7 @@ interface MenuItemProps {
 export function MenuItem({ icon, label, description, onClick, danger, disabled }: MenuItemProps) {
   return (
     <button
+      type="button"
       role="menuitem"
       onClick={onClick}
       disabled={disabled}
