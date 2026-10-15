@@ -6,20 +6,19 @@ interface ProgressProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Progress({ value = 0, max = 100, className = '', ...props }: ProgressProps) {
-  const percentage = Math.min(100, Math.max(0, (value / max) * 100));
+  const safeMax = max > 0 ? max : 100;
+  const percentage = Math.min(100, Math.max(0, (value / safeMax) * 100));
   return (
     <div
       role="progressbar"
       aria-valuenow={value}
       aria-valuemin={0}
-      aria-valuemax={max}
-      className={`relative h-2 w-full overflow-hidden rounded-full bg-gray-200 ${className}`}
+      aria-valuemax={safeMax}
+      aria-valuetext={`${Math.round(percentage)}%`}
+      className={`relative h-2 w-full overflow-hidden rounded-full bg-bg-sunken ${className}`}
       {...props}
     >
-      <div
-        className="h-full bg-blue-500 transition-all"
-        style={{ width: `${percentage}%` }}
-      />
+      <div className="h-full bg-accent transition-all" style={{ width: `${percentage}%` }} />
     </div>
   );
 }
