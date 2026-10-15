@@ -10,6 +10,7 @@ import { toast } from '@/components/ui/Toast'
 import { phpInfoApi } from '@/api/phpinfo'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
+import { copyText } from '@/lib/clipboard'
 
 export default function PhpInfo() {
   const { t } = useI18n()
@@ -36,11 +37,14 @@ export default function PhpInfo() {
         )
       : []
 
-  const copyIniPath = () => {
-    if (data?.iniFile) {
-      navigator.clipboard.writeText(data.iniFile)
-      toast({ type: 'success', title: t('phpinfo.iniCopied') })
-    }
+  const copyIniPath = async () => {
+    if (!data?.iniFile) return
+    const copied = await copyText(data.iniFile)
+    toast(
+      copied
+        ? { type: 'success', title: t('phpinfo.iniCopied') }
+        : { type: 'error', title: t('common.copyFailed') },
+    )
   }
 
   return (

@@ -15,6 +15,7 @@ const common = {
     submit: 'Submit',
     copy: 'Copy',
     copied: 'Copied',
+    copyFailed: 'Copy failed',
     logout: 'Sign Out',
     menu: 'Menu',
     user: 'User',

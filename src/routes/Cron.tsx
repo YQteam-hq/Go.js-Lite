@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
 import { Modal, Confirm } from '@/components/ui/Modal'
 import { cronApi } from '@/api/cron'
+import { copyText } from '@/lib/clipboard'
 import { toast } from '@/components/ui/Toast'
 import { useI18n } from '@/hooks/useI18n'
 import { useFormat } from '@/lib/format'
@@ -121,14 +122,14 @@ export default function Cron() {
 
   const handleCopyWebcronUrl = async () => {
     if (!webcronData?.webcron_url) return
-    try {
-      await navigator.clipboard.writeText(webcronData.webcron_url)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-      toast({ type: 'success', title: t('webcron.copied') })
-    } catch {
-      toast({ type: 'error', title: t('common.unknownError') })
+    const copied = await copyText(webcronData.webcron_url)
+    if (!copied) {
+      toast({ type: 'error', title: t('common.copyFailed') })
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+    toast({ type: 'success', title: t('webcron.copied') })
   }
 
   const { data: caps, isLoading: loadingCaps } = useQuery({

@@ -44,6 +44,7 @@ import { toast } from '@/components/ui/Toast'
 import { useI18n } from '@/hooks/useI18n'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useFormat } from '@/lib/format'
+import { copyText } from '@/lib/clipboard'
 import type { BackupCreateRequest, BackupRecord, BackupDestination, BackupSchedule, BackupRunRecord } from '@shared/types'
 
 const DEFAULT_EXCLUDE_DIRS = 'cache,node_modules,.git,.gojs'
@@ -1690,14 +1691,14 @@ function SchedulesTab() {
 
   const handleCopyUrl = async () => {
     if (!webcronUrl) return
-    try {
-      await navigator.clipboard.writeText(webcronUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-      toast({ type: 'success', title: t('common.copied') ?? 'Copied' })
-    } catch {
-      toast({ type: 'error', title: t('common.unknownError') })
+    const copied = await copyText(webcronUrl)
+    if (!copied) {
+      toast({ type: 'error', title: t('common.copyFailed') })
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+    toast({ type: 'success', title: t('common.copied') })
   }
 
   const regenTokenMutation = useMutation({
