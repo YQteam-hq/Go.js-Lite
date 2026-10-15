@@ -35,11 +35,21 @@ export function Modal({
   useEffect(() => {
     if (!open) return
 
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    // Locking the body hides the scrollbar, which shifts the whole page to the
+    // right. Padding by the scrollbar width keeps the layout where it was.
+    const { body, documentElement } = document
+    const prevOverflow = body.style.overflow
+    const prevPaddingRight = body.style.paddingRight
+    const scrollbarWidth = window.innerWidth - documentElement.clientWidth
+
+    body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`
+    }
 
     return () => {
-      document.body.style.overflow = prevOverflow
+      body.style.overflow = prevOverflow
+      body.style.paddingRight = prevPaddingRight
     }
   }, [open])
 
@@ -68,17 +78,18 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
       >
-        {(title || !closeOnBackdrop === false) && (
+        {title ? (
           <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-            <h3 id={titleId} className="text-base font-semibold text-fg">{title}</h3>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onClose}
-              aria-label={t('common.close')}
-            >
-              <X size={18} />
-            </Button>
+            <h3 id={titleId} className="text-base font-semibold text-fg">
+              {title}
+            </h3>
+            <CloseButton onClick={onClose} label={t('common.close')} />
+          </div>
+        ) : (
+          // Without a title the dialog still needs a reachable way out, so the
+          // control floats over the content instead of owning an empty header.
+          <div className="absolute right-3 top-3 z-10">
+            <CloseButton onClick={onClose} label={t('common.close')} />
           </div>
         )}
         <div className={`px-5 py-4 ${fullscreen ? 'flex-1 overflow-auto' : ''}`}>{children}</div>
@@ -89,6 +100,19 @@ export function Modal({
         )}
       </div>
     </div>
+  )
+}
+
+interface CloseButtonProps {
+  onClick: () => void
+  label: string
+}
+
+function CloseButton({ onClick, label }: CloseButtonProps) {
+  return (
+    <Button variant="ghost" size="icon-sm" onClick={onClick} aria-label={label}>
+      <X size={18} />
+    </Button>
   )
 }
 
