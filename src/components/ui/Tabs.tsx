@@ -89,6 +89,8 @@ export function TabsList({
 
 interface TabsTriggerProps extends HTMLAttributes<HTMLButtonElement> {
   value: string;
+  /** Disabled tabs are skipped by the keyboard navigation and cannot be selected. */
+  disabled?: boolean;
 }
 
 export function TabsTrigger({ value, className = '', children, ...props }: TabsTriggerProps) {

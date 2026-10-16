@@ -115,6 +115,31 @@ describe('Tabs', () => {
     expect(onValueChange).toHaveBeenCalledWith('two');
   });
 
+  it('skips disabled tabs when navigating with the arrow keys', () => {
+    render(
+      <Tabs value="one" onValueChange={() => {}}>
+        <TabsList>
+          <TabsTrigger value="one">One</TabsTrigger>
+          <TabsTrigger value="two" disabled>
+            Two
+          </TabsTrigger>
+          <TabsTrigger value="three">Three</TabsTrigger>
+        </TabsList>
+      </Tabs>,
+    );
+    const [one, two, three] = tabs();
+    expect(two.hasAttribute('disabled')).toBe(true);
+    one.focus();
+
+    // ArrowRight from the first tab skips the disabled middle tab.
+    fireEvent.keyDown(one, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(three);
+
+    // ArrowLeft wraps back to the first tab, again skipping the disabled one.
+    fireEvent.keyDown(three, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(one);
+  });
+
   it('paints with the semantic tokens instead of the raw palette', () => {
     render(<TabsHarness />);
     const list = screen.getByRole('tablist');
