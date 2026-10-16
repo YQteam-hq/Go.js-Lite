@@ -1,4 +1,14 @@
-import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactElement, type ReactNode } from 'react'
+import {
+  cloneElement,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from './Button'
 import { useIsMobile } from '@/hooks/useMediaQuery'
@@ -23,29 +33,39 @@ function withTriggerAria(trigger: ReactNode, open: boolean): ReactNode {
   })
 }
 
+/** Selector matching the menu items that can receive keyboard focus. */
+const MENU_ITEM_SELECTOR = '[role="menuitem"]:not([disabled])'
+
+/**
+ * Focuses the menu item at `index`, wrapping around in both directions.
+ * Any out-of-range index (including negatives) is normalised, and an empty
+ * list is a no-op, so callers never need their own bounds checks.
+ */
+function focusItemAt(items: HTMLElement[], index: number): void {
+  if (items.length === 0) return
+  const normalized = ((index % items.length) + items.length) % items.length
+  items[normalized]?.focus()
+}
+
 export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMenuProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  /**
+   * Which edge of the menu the open effect should focus: 'last' when the
+   * menu was opened with ArrowUp, 'first' otherwise. Reset to the default
+   * as soon as it is consumed so a later opening starts at the top again.
+   */
   const pendingFocusRef = useRef<'first' | 'last'>('first')
 
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
+  /**
+   * Collects the enabled menu items from the DOM. The callback identity is
+   * stable; the query itself runs at most once per keystroke / opening,
+   * which is negligible next to the focus() call it feeds.
+   */
   const getItems = useCallback(
-    () =>
-      Array.from(
-        menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? [],
-      ),
+    () => Array.from(menuRef.current?.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR) ?? []),
     [],
   )
 
@@ -54,13 +74,35 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
     ;(focusable[0] ?? triggerRef.current)?.focus()
   }, [])
 
-  const closeMenu = useCallback(
-    (restoreFocus: boolean) => {
-      setOpen(false)
-      if (restoreFocus) focusTrigger()
-    },
-    [focusTrigger],
-  )
+  /**
+   * Closes the menu without touching focus. Used when the user dismisses
+   * the menu with the pointer (outside click, trigger toggle) and focus is
+   * already where they want it.
+   */
+  const closeMenu = useCallback(() => setOpen(false), [])
+
+  /**
+   * Closes the menu and returns focus to the trigger. Used by keyboard
+   * dismissals (Escape / Tab) and item activation so focus never falls back
+   * to the document body.
+   */
+  const closeMenuAndRestoreFocus = useCallback(() => {
+    setOpen(false)
+    focusTrigger()
+  }, [focusTrigger])
+
+  // Close on an outside pointer press. Focus is intentionally left alone:
+  // the user just clicked elsewhere and does not expect it to jump back.
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        closeMenu()
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open, closeMenu])
 
   // Move focus into the menu when it opens, honouring the direction the
   // keyboard asked for (ArrowUp opens on the last item).
@@ -75,40 +117,53 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
   const handleTriggerKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
-      pendingFocusRef.current = event.key === 'ArrowUp' ? 'last' : 'first'
-      if (!open) setOpen(true)
+      if (!open) {
+        pendingFocusRef.current = event.key === 'ArrowUp' ? 'last' : 'first'
+        setOpen(true)
+        return
+      }
+      // Already open (opened with the pointer, focus still on the trigger):
+      // move focus straight into the menu instead of waiting for a re-render.
+      const items = getItems()
+      focusItemAt(items, event.key === 'ArrowUp' ? items.length - 1 : 0)
       return
     }
     if (event.key === 'Escape' && open) {
       event.preventDefault()
-      closeMenu(true)
+      closeMenuAndRestoreFocus()
     }
   }
 
+  /**
+   * Keyboard navigation inside the open menu. `activeIndex` is -1 when focus
+   * is not on a menu item (for example the menu was opened by a click that
+   * did not move focus); Arrow keys then start from the matching edge.
+   */
   const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const items = getItems()
-    const currentIndex = items.indexOf(document.activeElement as HTMLElement)
+    const activeIndex = items.indexOf(document.activeElement as HTMLElement)
+
     switch (event.key) {
       case 'Escape':
       case 'Tab':
         event.preventDefault()
-        closeMenu(true)
+        closeMenuAndRestoreFocus()
         return
       case 'ArrowDown':
         event.preventDefault()
-        items[(currentIndex + 1) % Math.max(items.length, 1)]?.focus()
+        focusItemAt(items, activeIndex < 0 ? 0 : activeIndex + 1)
         return
       case 'ArrowUp':
         event.preventDefault()
-        items[currentIndex <= 0 ? items.length - 1 : currentIndex - 1]?.focus()
+        focusItemAt(items, activeIndex < 0 ? items.length - 1 : activeIndex - 1)
         return
       case 'Home':
         event.preventDefault()
-        items[0]?.focus()
+        focusItemAt(items, 0)
         return
       case 'End':
         event.preventDefault()
-        items[items.length - 1]?.focus()
+        focusItemAt(items, items.length - 1)
         return
       default:
         return
@@ -119,7 +174,7 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
     <div ref={containerRef} className="relative">
       <div
         ref={triggerRef}
-        onClick={() => (open ? closeMenu(false) : setOpen(true))}
+        onClick={() => (open ? closeMenu() : setOpen(true))}
         onKeyDown={handleTriggerKeyDown}
       >
         {withTriggerAria(trigger, open)}
@@ -133,7 +188,7 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
             ${align === 'right' ? 'right-0' : 'left-0'}
           `}
           role="menu"
-          onClick={() => closeMenu(true)}
+          onClick={() => closeMenuAndRestoreFocus()}
           onKeyDown={handleMenuKeyDown}
         >
           {children}

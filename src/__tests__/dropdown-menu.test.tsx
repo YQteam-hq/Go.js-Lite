@@ -123,4 +123,72 @@ describe('DropdownMenu', () => {
     fireEvent.click(trigger)
     expect(screen.queryByRole('menu')).toBeNull()
   })
+
+  it('never focuses or navigates to a disabled item', () => {
+    render(
+      <DropdownMenu trigger={<Button variant="secondary">Open menu</Button>}>
+        <MenuItem label="First" disabled onClick={() => {}} />
+        <MenuItem label="Second" onClick={() => {}} />
+        <MenuItem label="Third" disabled onClick={() => {}} />
+      </DropdownMenu>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+    const enabled = () => screen.getAllByRole('menuitem').filter((el) => !el.hasAttribute('disabled'))
+
+    // The open effect skips the disabled leading item.
+    expect(document.activeElement).toBe(enabled()[0])
+
+    // ArrowDown from the only enabled item wraps back to it.
+    fireEvent.keyDown(enabled()[0], { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(enabled()[0])
+
+    // Home / End also stay on the enabled item.
+    fireEvent.keyDown(enabled()[0], { key: 'End' })
+    expect(document.activeElement).toBe(enabled()[0])
+  })
+
+  it('starts navigation from the edges when focus is not on a menu item', () => {
+    renderMenu()
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+    items()[0].blur()
+    expect(document.activeElement).not.toBe(items()[0])
+
+    // activeIndex === -1: ArrowDown starts at the first item...
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(items()[0])
+
+    // ...and ArrowUp starts at the last item.
+    items()[0].blur()
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(items()[1])
+  })
+
+  it('moves focus into an already open menu when the trigger gets arrow keys', () => {
+    renderMenu()
+    const trigger = screen.getByRole('button', { name: 'Open menu' })
+    fireEvent.click(trigger)
+    // Focus is still on the trigger after a pointer opening.
+    trigger.focus()
+
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(items()[0])
+
+    fireEvent.keyDown(trigger, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(items()[1])
+  })
+
+  it('does not crash when the menu has no items', () => {
+    render(
+      <DropdownMenu trigger={<Button variant="secondary">Open menu</Button>}>
+        <MenuSeparator />
+      </DropdownMenu>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'ArrowDown' })
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'End' })
+
+    expect(screen.queryByRole('menu')).toBeTruthy()
+  })
 })
