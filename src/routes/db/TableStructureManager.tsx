@@ -9,6 +9,7 @@ import { Modal, Confirm } from '@/components/ui/Modal'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Spinner } from '@/components/ui/Spinner'
 import { toast } from '@/components/ui/Toast'
+import { useI18n } from '@/hooks/useI18n'
 import { dbApi } from '@/api/db'
 import type { DbColumnDefinition } from '@/api/db'
 import type { DbColumn } from '@shared/types'
@@ -74,6 +75,7 @@ export default function TableStructureManager() {
   const [searchParams] = useSearchParams()
   const database = searchParams.get('database') || ''
   const table = searchParams.get('table') || ''
+  const { t } = useI18n()
 
   const [tab, setTab] = useState('columns')
   const [columns, setColumns] = useState<DbColumn[]>([])
@@ -103,13 +105,13 @@ export default function TableStructureManager() {
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Failed to load table structure',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.structure.loadStructureFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setLoading(false)
     }
-  }, [connId, database, table])
+  }, [connId, database, table, t])
 
   const loadIndexes = useCallback(async () => {
     if (!connId || !database || !tableIsSafe) {
@@ -138,11 +140,11 @@ export default function TableStructureManager() {
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Failed to load indexes',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.structure.loadIndexesFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     }
-  }, [connId, database, table, tableIsSafe])
+  }, [connId, database, table, tableIsSafe, t])
 
   const refresh = useCallback(() => {
     loadStructure()
@@ -178,11 +180,11 @@ export default function TableStructureManager() {
 
   const buildColumnDefinition = (): DbColumnDefinition | null => {
     if (!IDENTIFIER_PATTERN.test(form.name)) {
-      toast({ type: 'warning', title: 'Column name must use letters, digits, _ or $' })
+      toast({ type: 'warning', title: t('db.structure.columnNameInvalid') })
       return null
     }
     if (!form.type) {
-      toast({ type: 'warning', title: 'Column type is required' })
+      toast({ type: 'warning', title: t('db.structure.columnTypeRequired') })
       return null
     }
 
@@ -217,7 +219,10 @@ export default function TableStructureManager() {
       })
       toast({
         type: 'success',
-        title: formMode === 'ADD' ? 'Column added' : 'Column modified',
+        title:
+          formMode === 'ADD'
+            ? t('db.structure.columnAdded')
+            : t('db.structure.columnModified'),
         description: `${form.name}`,
       })
       setFormOpen(false)
@@ -225,8 +230,8 @@ export default function TableStructureManager() {
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Alter table failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.structure.alterFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setSaving(false)
@@ -245,14 +250,14 @@ export default function TableStructureManager() {
         action: 'DROP',
         column: { name: dropTarget.name, type: dropTarget.type },
       })
-      toast({ type: 'success', title: 'Column dropped', description: dropTarget.name })
+      toast({ type: 'success', title: t('db.structure.columnDropped'), description: dropTarget.name })
       setDropTarget(null)
       refresh()
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Drop column failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.structure.dropColumnFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setSaving(false)
@@ -274,11 +279,11 @@ export default function TableStructureManager() {
 
   const handleCreateIndex = async () => {
     if (!IDENTIFIER_PATTERN.test(indexName)) {
-      toast({ type: 'warning', title: 'Index name must use letters, digits, _ or $' })
+      toast({ type: 'warning', title: t('db.structure.indexNameInvalid') })
       return
     }
     if (indexColumns.length === 0) {
-      toast({ type: 'warning', title: 'Select at least one column' })
+      toast({ type: 'warning', title: t('db.structure.indexColumnRequired') })
       return
     }
 
@@ -292,14 +297,14 @@ export default function TableStructureManager() {
         indexType,
         columns: indexColumns,
       })
-      toast({ type: 'success', title: 'Index created', description: indexName })
+      toast({ type: 'success', title: t('db.structure.indexCreated'), description: indexName })
       setIndexOpen(false)
       refresh()
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Create index failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.structure.createIndexFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setSaving(false)
@@ -317,14 +322,14 @@ export default function TableStructureManager() {
         tableName: table,
         indexName: dropIndexTarget.name,
       })
-      toast({ type: 'success', title: 'Index dropped', description: dropIndexTarget.name })
+      toast({ type: 'success', title: t('db.structure.indexDropped'), description: dropIndexTarget.name })
       setDropIndexTarget(null)
       refresh()
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Drop index failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.structure.dropIndexFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setSaving(false)
@@ -341,30 +346,30 @@ export default function TableStructureManager() {
           <ArrowLeft size={18} />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-semibold text-fg">Table structure</h1>
+          <h1 className="text-lg font-semibold text-fg">{t('db.structure.title')}</h1>
           <p className="text-xs text-fg-subtle truncate">
             {database}.{table}
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={refresh} loading={loading}>
           <RefreshCw size={14} />
-          Refresh
+          {t('common.refresh')}
         </Button>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="columns">Columns</TabsTrigger>
-          <TabsTrigger value="indexes">Indexes</TabsTrigger>
+          <TabsTrigger value="columns">{t('db.structure.tabColumns')}</TabsTrigger>
+          <TabsTrigger value="indexes">{t('db.structure.tabIndexes')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="columns">
           <Card>
             <CardHeader className="flex items-center justify-between gap-3">
-              <CardTitle>Columns</CardTitle>
+              <CardTitle>{t('db.structure.tabColumns')}</CardTitle>
               <Button size="sm" onClick={openAddColumn}>
                 <Plus size={16} />
-                Add column
+                {t('db.structure.addColumn')}
               </Button>
             </CardHeader>
             <CardBody>
@@ -373,19 +378,19 @@ export default function TableStructureManager() {
                   <Spinner />
                 </div>
               ) : columns.length === 0 ? (
-                <p className="py-8 text-center text-sm text-fg-muted">No columns found</p>
+                <p className="py-8 text-center text-sm text-fg-muted">{t('db.structure.noColumns')}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border text-left text-fg-subtle">
-                        <th className="px-3 py-2 font-medium">Name</th>
-                        <th className="px-3 py-2 font-medium">Type</th>
-                        <th className="px-3 py-2 font-medium">Nullable</th>
-                        <th className="px-3 py-2 font-medium">Key</th>
-                        <th className="px-3 py-2 font-medium">Default</th>
-                        <th className="px-3 py-2 font-medium">Extra</th>
-                        <th className="px-3 py-2 font-medium">Actions</th>
+                        <th className="px-3 py-2 font-medium">{t('db.structure.columnName')}</th>
+                        <th className="px-3 py-2 font-medium">{t('db.structure.columnType')}</th>
+                        <th className="px-3 py-2 font-medium">{t('db.structure.nullable')}</th>
+                        <th className="px-3 py-2 font-medium">{t('db.structure.columnKey')}</th>
+                        <th className="px-3 py-2 font-medium">{t('db.structure.defaultValue')}</th>
+                        <th className="px-3 py-2 font-medium">{t('db.structure.columnExtra')}</th>
+                        <th className="px-3 py-2 font-medium">{t('common.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -410,7 +415,7 @@ export default function TableStructureManager() {
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label="Modify column"
+                                aria-label={t('db.structure.modifyColumn')}
                                 onClick={() => openModifyColumn(column)}
                               >
                                 <Wrench size={14} />
@@ -418,7 +423,7 @@ export default function TableStructureManager() {
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label="Drop column"
+                                aria-label={t('db.structure.dropColumn')}
                                 onClick={() => setDropTarget(column)}
                               >
                                 <Trash2 size={14} />
@@ -438,15 +443,15 @@ export default function TableStructureManager() {
         <TabsContent value="indexes">
           <Card>
             <CardHeader className="flex items-center justify-between gap-3">
-              <CardTitle>Indexes</CardTitle>
+              <CardTitle>{t('db.structure.tabIndexes')}</CardTitle>
               <Button size="sm" onClick={openCreateIndex}>
                 <KeyRound size={16} />
-                Create index
+                {t('db.structure.createIndex')}
               </Button>
             </CardHeader>
             <CardBody>
               {indexes.length === 0 ? (
-                <p className="py-8 text-center text-sm text-fg-muted">No indexes found</p>
+                <p className="py-8 text-center text-sm text-fg-muted">{t('db.structure.noIndexes')}</p>
               ) : (
                 <ul className="divide-y divide-border">
                   {indexes.map((index) => (
@@ -465,7 +470,7 @@ export default function TableStructureManager() {
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label="Drop index"
+                          aria-label={t('db.structure.dropIndex')}
                           onClick={() => setDropIndexTarget(index)}
                         >
                           <Trash2 size={14} />
@@ -483,22 +488,22 @@ export default function TableStructureManager() {
       <Modal
         open={formOpen}
         onClose={() => setFormOpen(false)}
-        title={formMode === 'ADD' ? 'Add column' : 'Modify column'}
+        title={formMode === 'ADD' ? t('db.structure.addColumn') : t('db.structure.modifyColumn')}
         size="lg"
         footer={
           <>
             <Button variant="secondary" onClick={() => setFormOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleSubmitColumn} loading={saving}>
-              {formMode === 'ADD' ? 'Add' : 'Save'}
+              {formMode === 'ADD' ? t('common.add') : t('common.save')}
             </Button>
           </>
         }
       >
         <div className="space-y-3">
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-fg-muted">Name</span>
+            <span className="text-xs font-medium text-fg-muted">{t('db.structure.columnName')}</span>
             <Input
               value={form.name}
               disabled={formMode === 'MODIFY'}
@@ -508,7 +513,7 @@ export default function TableStructureManager() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1">
-              <span className="text-xs font-medium text-fg-muted">Type</span>
+              <span className="text-xs font-medium text-fg-muted">{t('db.structure.columnType')}</span>
               <select
                 className="input-base w-full"
                 value={form.type}
@@ -522,17 +527,17 @@ export default function TableStructureManager() {
               </select>
             </label>
             <label className="block space-y-1">
-              <span className="text-xs font-medium text-fg-muted">Length</span>
+              <span className="text-xs font-medium text-fg-muted">{t('db.structure.columnLength')}</span>
               <Input
                 value={form.length}
-                placeholder="e.g. 255"
+                placeholder={t('db.structure.lengthPlaceholder')}
                 onChange={(event) => setForm((prev) => ({ ...prev, length: event.target.value }))}
               />
             </label>
           </div>
 
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-fg-muted">Default value</span>
+            <span className="text-xs font-medium text-fg-muted">{t('db.structure.defaultValue')}</span>
             <Input
               value={form.defaultValue}
               onChange={(event) =>
@@ -542,7 +547,7 @@ export default function TableStructureManager() {
           </label>
 
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-fg-muted">Comment</span>
+            <span className="text-xs font-medium text-fg-muted">{t('db.structure.comment')}</span>
             <Input
               value={form.comment}
               onChange={(event) => setForm((prev) => ({ ...prev, comment: event.target.value }))}
@@ -559,7 +564,7 @@ export default function TableStructureManager() {
                   setForm((prev) => ({ ...prev, nullable: event.target.checked }))
                 }
               />
-              Nullable
+              {t('db.structure.nullable')}
             </label>
             <label className="flex items-center gap-2 text-sm text-fg">
               <input
@@ -570,7 +575,7 @@ export default function TableStructureManager() {
                   setForm((prev) => ({ ...prev, unsigned: event.target.checked }))
                 }
               />
-              Unsigned
+              {t('db.structure.unsigned')}
             </label>
             <label className="flex items-center gap-2 text-sm text-fg">
               <input
@@ -581,7 +586,7 @@ export default function TableStructureManager() {
                   setForm((prev) => ({ ...prev, autoIncrement: event.target.checked }))
                 }
               />
-              Auto increment
+              {t('db.structure.autoIncrement')}
             </label>
             <label className="flex items-center gap-2 text-sm text-fg">
               <input
@@ -592,7 +597,7 @@ export default function TableStructureManager() {
                   setForm((prev) => ({ ...prev, primaryKey: event.target.checked }))
                 }
               />
-              Primary key
+              {t('db.structure.primaryKey')}
             </label>
           </div>
         </div>
@@ -601,15 +606,15 @@ export default function TableStructureManager() {
       <Modal
         open={indexOpen}
         onClose={() => setIndexOpen(false)}
-        title="Create index"
+        title={t('db.structure.createIndex')}
         size="lg"
         footer={
           <>
             <Button variant="secondary" onClick={() => setIndexOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleCreateIndex} loading={saving}>
-              Create
+              {t('db.structure.create')}
             </Button>
           </>
         }
@@ -617,15 +622,15 @@ export default function TableStructureManager() {
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1">
-              <span className="text-xs font-medium text-fg-muted">Index name</span>
+              <span className="text-xs font-medium text-fg-muted">{t('db.structure.indexName')}</span>
               <Input
                 value={indexName}
                 onChange={(event) => setIndexName(event.target.value)}
-                placeholder="idx_example"
+                placeholder={t('db.structure.indexNamePlaceholder')}
               />
             </label>
             <label className="block space-y-1">
-              <span className="text-xs font-medium text-fg-muted">Index type</span>
+              <span className="text-xs font-medium text-fg-muted">{t('db.structure.indexType')}</span>
               <select
                 className="input-base w-full"
                 value={indexType}
@@ -641,7 +646,7 @@ export default function TableStructureManager() {
           </div>
 
           <div className="space-y-2">
-            <span className="text-xs font-medium text-fg-muted">Columns</span>
+            <span className="text-xs font-medium text-fg-muted">{t('db.structure.tabColumns')}</span>
             <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border border-border p-3">
               {columns.map((column) => (
                 <label key={column.name} className="flex items-center gap-2 text-sm text-fg">
@@ -656,7 +661,7 @@ export default function TableStructureManager() {
                 </label>
               ))}
               {columns.length === 0 && (
-                <p className="text-xs text-fg-subtle">Load the structure first</p>
+                <p className="text-xs text-fg-subtle">{t('db.structure.loadStructureFirst')}</p>
               )}
             </div>
           </div>
@@ -665,8 +670,8 @@ export default function TableStructureManager() {
 
       <Confirm
         open={dropTarget !== null}
-        title="Drop column"
-        message={`Drop column "${dropTarget?.name ?? ''}"? This cannot be undone.`}
+        title={t('db.structure.dropColumn')}
+        message={t('db.structure.dropColumnConfirm', { name: dropTarget?.name ?? '' })}
         variant="danger"
         loading={saving}
         onCancel={() => setDropTarget(null)}
@@ -675,8 +680,8 @@ export default function TableStructureManager() {
 
       <Confirm
         open={dropIndexTarget !== null}
-        title="Drop index"
-        message={`Drop index "${dropIndexTarget?.name ?? ''}"? This cannot be undone.`}
+        title={t('db.structure.dropIndex')}
+        message={t('db.structure.dropIndexConfirm', { name: dropIndexTarget?.name ?? '' })}
         variant="danger"
         loading={saving}
         onCancel={() => setDropIndexTarget(null)}
