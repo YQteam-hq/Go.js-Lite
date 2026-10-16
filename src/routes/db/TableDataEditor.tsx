@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal, Confirm } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { toast } from '@/components/ui/Toast'
+import { useI18n } from '@/hooks/useI18n'
 import { dbApi } from '@/api/db'
 import type { DbColumn } from '@shared/types'
 import type { DbRow } from '@/api/db'
@@ -19,6 +20,7 @@ export default function TableDataEditor() {
   const [searchParams] = useSearchParams()
   const database = searchParams.get('database') || ''
   const table = searchParams.get('table') || ''
+  const { t } = useI18n()
 
   const [columns, setColumns] = useState<DbColumn[]>([])
   const [rows, setRows] = useState<DbRow[]>([])
@@ -46,11 +48,11 @@ export default function TableDataEditor() {
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Failed to load table structure',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.structure.loadStructureFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     }
-  }, [connId, database, table])
+  }, [connId, database, table, t])
 
   const loadRows = useCallback(async () => {
     if (!connId || !database || !table) return
@@ -71,13 +73,13 @@ export default function TableDataEditor() {
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Failed to load table data',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.dataEditor.loadTableDataFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setLoading(false)
     }
-  }, [connId, database, table, page, sortField, sortOrder])
+  }, [connId, database, table, page, sortField, sortOrder, t])
 
   useEffect(() => {
     loadStructure()
@@ -114,7 +116,7 @@ export default function TableDataEditor() {
     })
 
     if (Object.keys(payload).length === 0) {
-      toast({ type: 'warning', title: 'Provide at least one value' })
+      toast({ type: 'warning', title: t('db.dataEditor.provideAtLeastOneValue') })
       return
     }
 
@@ -123,8 +125,10 @@ export default function TableDataEditor() {
       const result = await dbApi.insertRow({ connId, database, table, data: payload })
       toast({
         type: 'success',
-        title: 'Row inserted',
-        description: `Insert id: ${result.insertId === null ? 'n/a' : result.insertId}`,
+        title: t('db.dataEditor.rowInserted'),
+        description: t('db.dataEditor.insertId', {
+          id: result.insertId === null ? 'n/a' : result.insertId,
+        }),
       })
       setInsertOpen(false)
       setNewRow({})
@@ -132,8 +136,8 @@ export default function TableDataEditor() {
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Insert failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.dataEditor.insertFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setSaving(false)
@@ -155,8 +159,8 @@ export default function TableDataEditor() {
       })
       toast({
         type: 'success',
-        title: 'Row updated',
-        description: `${result.affectedRows} row(s) affected`,
+        title: t('db.dataEditor.rowUpdated'),
+        description: t('db.dataEditor.rowsAffected', { count: result.affectedRows }),
       })
       setEditOpen(false)
       setEditingRow(null)
@@ -164,8 +168,8 @@ export default function TableDataEditor() {
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Update failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.dataEditor.updateFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setSaving(false)
@@ -186,16 +190,16 @@ export default function TableDataEditor() {
       })
       toast({
         type: 'success',
-        title: 'Row deleted',
-        description: `${result.affectedRows} row(s) affected`,
+        title: t('db.dataEditor.rowDeleted'),
+        description: t('db.dataEditor.rowsAffected', { count: result.affectedRows }),
       })
       setDeleteTarget(null)
       loadRows()
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.dataEditor.deleteFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setSaving(false)
@@ -222,24 +226,24 @@ export default function TableDataEditor() {
           <ArrowLeft size={18} />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-semibold text-fg">Table data editor</h1>
+          <h1 className="text-lg font-semibold text-fg">{t('db.dataEditor.title')}</h1>
           <p className="text-xs text-fg-subtle truncate">
             {database}.{table}
           </p>
         </div>
         <Button size="sm" onClick={openInsert} disabled={columns.length === 0}>
           <Plus size={16} />
-          Add row
+          {t('db.dataEditor.addRow')}
         </Button>
       </div>
 
       <Card>
         <CardHeader className="flex items-center justify-between gap-3">
-          <CardTitle>Rows</CardTitle>
+          <CardTitle>{t('db.dataEditor.rows')}</CardTitle>
           <div className="flex items-center gap-2">
-            <Badge variant="muted">{total} row(s)</Badge>
+            <Badge variant="muted">{t('db.rowCount', { count: total })}</Badge>
             <Button variant="secondary" size="sm" onClick={loadRows} loading={loading}>
-              Refresh
+              {t('common.refresh')}
             </Button>
           </div>
         </CardHeader>
@@ -249,7 +253,7 @@ export default function TableDataEditor() {
               <Spinner />
             </div>
           ) : rows.length === 0 ? (
-            <p className="py-8 text-center text-sm text-fg-muted">No rows in this table</p>
+            <p className="py-8 text-center text-sm text-fg-muted">{t('db.dataEditor.noRowsInTable')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -271,7 +275,7 @@ export default function TableDataEditor() {
                         </button>
                       </th>
                     ))}
-                    <th className="px-3 py-2 font-medium">Actions</th>
+                    <th className="px-3 py-2 font-medium">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -287,7 +291,7 @@ export default function TableDataEditor() {
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label="Edit row"
+                            aria-label={t('db.dataEditor.editRow')}
                             onClick={() => openEdit(row)}
                           >
                             <Pencil size={14} />
@@ -295,7 +299,7 @@ export default function TableDataEditor() {
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label="Delete row"
+                            aria-label={t('db.dataEditor.deleteRow')}
                             onClick={() => setDeleteTarget(row)}
                           >
                             <Trash2 size={14} />
@@ -311,7 +315,7 @@ export default function TableDataEditor() {
 
           <div className="mt-4 flex items-center justify-between gap-3">
             <span className="text-xs text-fg-subtle">
-              Showing {rangeStart}-{rangeEnd} of {total}
+              {t('db.dataEditor.showingRange', { start: rangeStart, end: rangeEnd, total })}
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -320,10 +324,10 @@ export default function TableDataEditor() {
                 disabled={page <= 1}
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               >
-                Previous
+                {t('db.dataEditor.previous')}
               </Button>
               <span className="text-xs text-fg-muted">
-                Page {page} of {totalPages}
+                {t('db.dataEditor.pageOf', { page, total: totalPages })}
               </span>
               <Button
                 variant="secondary"
@@ -331,7 +335,7 @@ export default function TableDataEditor() {
                 disabled={page >= totalPages}
                 onClick={() => setPage((prev) => prev + 1)}
               >
-                Next
+                {t('db.dataEditor.next')}
               </Button>
             </div>
           </div>
@@ -341,15 +345,15 @@ export default function TableDataEditor() {
       <Modal
         open={insertOpen}
         onClose={() => setInsertOpen(false)}
-        title="Add row"
+        title={t('db.dataEditor.addRow')}
         size="lg"
         footer={
           <>
             <Button variant="secondary" onClick={() => setInsertOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleInsert} loading={saving}>
-              Insert
+              {t('db.dataEditor.insert')}
             </Button>
           </>
         }
@@ -363,7 +367,11 @@ export default function TableDataEditor() {
               </span>
               <Input
                 value={newRow[column.name] ?? ''}
-                placeholder={column.default ? `Default: ${column.default}` : 'Leave empty to skip'}
+                placeholder={
+                  column.default
+                    ? t('db.dataEditor.defaultValue', { value: String(column.default) })
+                    : t('db.dataEditor.leaveEmptyToSkip')
+                }
                 onChange={(event) =>
                   setNewRow((prev) => ({ ...prev, [column.name]: event.target.value }))
                 }
@@ -376,15 +384,15 @@ export default function TableDataEditor() {
       <Modal
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        title="Edit row"
+        title={t('db.dataEditor.editRow')}
         size="lg"
         footer={
           <>
             <Button variant="secondary" onClick={() => setEditOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleUpdate} loading={saving}>
-              Save
+              {t('common.save')}
             </Button>
           </>
         }
@@ -395,7 +403,9 @@ export default function TableDataEditor() {
               <span className="text-xs font-medium text-fg-muted">
                 {column.name}
                 <span className="ml-1 text-fg-subtle">{column.type}</span>
-                {column.name === primaryKey?.name && <span className="ml-1">(primary key)</span>}
+                {column.name === primaryKey?.name && (
+                  <span className="ml-1">{t('db.dataEditor.primaryKeyTag')}</span>
+                )}
               </span>
               <Input
                 value={editingRow ? String(editingRow[column.name] ?? '') : ''}
@@ -412,8 +422,8 @@ export default function TableDataEditor() {
 
       <Confirm
         open={deleteTarget !== null}
-        title="Delete row"
-        message="This action cannot be undone. Continue?"
+        title={t('db.dataEditor.deleteRow')}
+        message={t('db.dataEditor.deleteRowConfirm')}
         variant="danger"
         loading={saving}
         onCancel={() => setDeleteTarget(null)}
