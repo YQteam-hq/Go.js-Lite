@@ -16,44 +16,46 @@ export function useLongPress<T extends HTMLElement>(
   const movedRef = useRef(false)
   const startPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
 
+  // Every cancellation funnels through here — the unmount cleanup, the
+  // pointer-up path, the move threshold and a new gesture replacing a
+  // pending one — so the timer has a single owner instead of open-coded
+  // clearTimeout calls scattered across the handlers. Returns whether a
+  // pending timer was actually cancelled.
+  const cancelPending = useCallback((): boolean => {
+    if (timerRef.current === null) return false
+    window.clearTimeout(timerRef.current)
+    timerRef.current = null
+    return true
+  }, [])
+
   // A gesture that never resolves, because the row unmounted mid-press or the
   // route changed, must not leave a timer that fires into a dead tree.
-  useEffect(
-    () => () => {
-      if (timerRef.current !== null) {
-        window.clearTimeout(timerRef.current)
-        timerRef.current = null
-      }
-    },
-    [],
-  )
+  useEffect(() => () => {
+    cancelPending()
+  }, [cancelPending])
 
   // Both the timer path and the pointer-up path land here. The guard keeps the
   // second call of a finished gesture a no-op, so onEnd fires exactly once.
   const clear = useCallback(() => {
-    if (timerRef.current === null) return
-    window.clearTimeout(timerRef.current)
-    timerRef.current = null
+    if (!cancelPending()) return
     setActive(false)
     onEnd?.()
-  }, [onEnd])
+  }, [cancelPending, onEnd])
 
   const start = useCallback(
     (clientX: number, clientY: number) => {
-      if (timerRef.current !== null) {
-        window.clearTimeout(timerRef.current)
-        timerRef.current = null
-      }
+      cancelPending()
       movedRef.current = false
       startPosRef.current = { x: clientX, y: clientY }
       setActive(true)
       onStart?.()
+      // The single place a timer is armed.
       timerRef.current = window.setTimeout(() => {
         callback()
         clear()
       }, delay)
     },
-    [callback, delay, onStart, clear],
+    [callback, delay, onStart, cancelPending, clear],
   )
 
   const move = useCallback(
