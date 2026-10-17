@@ -66,15 +66,37 @@ function gojs_quota_read_counter($file) {
 /**
  * Adds one hit to a counter file, preserving the count already stored there.
  *
+ * The read and the write share one exclusive lock, so two requests that land
+ * in the same bucket cannot lose an increment between reading the count and
+ * writing it back. The file is opened for update and only truncated once the
+ * new payload is ready, so a reader never sees an empty counter.
+ *
  * @param string $uid User identifier
  * @param string $kind Either "get" or "write"
  * @param int $bucket Minute bucket, the number of minutes since the epoch
  * @return void
  */
 function gojs_quota_increment_counter($uid, $kind, $bucket) {
+    gojs_quota_ensure_dir();
     $file = gojs_quota_counter_file($uid, $kind, $bucket);
-    $data = array('count' => gojs_quota_read_counter($file) + 1, 'last_ts' => time());
-    @file_put_contents($file, json_encode($data), LOCK_EX);
+    $handle = @fopen($file, 'c+');
+    if ($handle === false) return;
+    if (!flock($handle, LOCK_EX)) {
+        @fclose($handle);
+        return;
+    }
+
+    $raw = stream_get_contents($handle);
+    $data = $raw ? json_decode($raw, true) : null;
+    $count = is_array($data) && isset($data['count']) ? (int)$data['count'] : 0;
+    $payload = json_encode(array('count' => $count + 1, 'last_ts' => time()));
+
+    ftruncate($handle, 0);
+    rewind($handle);
+    fwrite($handle, $payload);
+    fflush($handle);
+    flock($handle, LOCK_UN);
+    @fclose($handle);
 }
 
 /**

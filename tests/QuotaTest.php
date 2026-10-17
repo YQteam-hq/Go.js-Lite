@@ -148,4 +148,24 @@ class QuotaTest extends TestCase
         $this->assertFalse(gojs_quota_check($v, 'PUT')['allow']);
         $this->assertTrue(gojs_quota_check($v, 'GET')['allow']);
     }
+
+    public function testTheCounterAccumulatesInsideOneBucket(): void
+    {
+        gojs_quota_increment_counter('u_counter', 'get', 1000);
+        gojs_quota_increment_counter('u_counter', 'get', 1000);
+        gojs_quota_increment_counter('u_counter', 'get', 1000);
+
+        $this->assertSame(3, gojs_quota_read_counter(gojs_quota_counter_file('u_counter', 'get', 1000)));
+        $this->assertSame(3, gojs_quota_window_count('u_counter', 'get', 1000));
+    }
+
+    public function testTheWindowSpansTheCurrentAndThePreviousBucket(): void
+    {
+        gojs_quota_increment_counter('u_window', 'get', 1000);
+        gojs_quota_increment_counter('u_window', 'get', 1001);
+
+        $this->assertSame(2, gojs_quota_window_count('u_window', 'get', 1001));
+        $this->assertSame(1, gojs_quota_window_count('u_window', 'get', 1002));
+        $this->assertSame(0, gojs_quota_window_count('u_window', 'get', 1003));
+    }
 }
