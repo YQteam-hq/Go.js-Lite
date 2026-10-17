@@ -8,11 +8,11 @@
 [![PHP](https://img.shields.io/badge/PHP-%3E%3D7.4-777bb4.svg)](https://php.net)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6.svg)](https://www.typescriptlang.org)
-[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
 
 ---
 
-## What's new in 1.0.0 (unreleased)
+## What's new in 1.0.0
 
 - **Two-factor authentication** — per-user TOTP, with eight single-use recovery codes issued at enrolment and a code challenge at login. See [docs/mfa.md](docs/mfa.md).
 - **Hardened uploads** — filenames are validated before the file is written, and active SVG is refused unless it is explicitly allowed.

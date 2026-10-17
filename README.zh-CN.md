@@ -8,11 +8,11 @@
 [![PHP](https://img.shields.io/badge/PHP-%3E%3D7.4-777bb4.svg)](https://php.net)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6.svg)](https://www.typescriptlang.org)
-[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
 
 ---
 
-## 1.0.0 有什么新东西（未发布）
+## 1.0.0 有什么新东西
 
 - **双因素认证** — 按用户启用 TOTP，注册时一次性发放 8 个恢复码，登录时校验动态口令。详见 [docs/mfa.md](docs/mfa.md)。
 - **上传加固** — 文件名在落盘之前先做校验；除非显式放行，否则拒绝可执行的 SVG。
