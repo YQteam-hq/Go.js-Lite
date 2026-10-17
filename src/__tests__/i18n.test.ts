@@ -107,6 +107,33 @@ describe('useI18n', () => {
     expect(result.current.t('nope')).toBe('nope');
   });
 
+  it('prefers an explicit defaultValue when the key is unknown', () => {
+    const { result } = renderHook(() => useSubject());
+    expect(result.current.t('common.doesNotExist', { defaultValue: 'Fallback text' })).toBe(
+      'Fallback text'
+    );
+    expect(result.current.t('nope', { defaultValue: 'Other fallback' })).toBe('Other fallback');
+  });
+
+  it('keeps the translation when the key exists, even with a defaultValue', () => {
+    const { result } = renderHook(() => useSubject());
+    expect(result.current.t('common.save', { defaultValue: 'Fallback text' })).toBe(zh.common.save);
+  });
+
+  it('interpolates params inside a defaultValue', () => {
+    const { result } = renderHook(() => useSubject());
+    expect(
+      result.current.t('common.missing', { defaultValue: 'Copied {count} files', count: 3 })
+    ).toBe('Copied 3 files');
+  });
+
+  it('ignores a non-string defaultValue', () => {
+    const { result } = renderHook(() => useSubject());
+    expect(result.current.t('common.doesNotExist', { defaultValue: 5 })).toBe(
+      'common.doesNotExist'
+    );
+  });
+
   it('interpolates named params', () => {
     const { result } = renderHook(() => useSubject());
     expect(result.current.t('common.minutesAgo', { count: 5 })).toBe(

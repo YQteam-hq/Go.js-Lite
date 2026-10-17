@@ -74,7 +74,11 @@ export function useI18n() {
       params?: Record<string, string | number>,
     ): string => {
       const value = getNestedValue(currentLocale, key)
-      const text = value ?? key
+      // An explicit defaultValue in the params is the fallback when the key is
+      // missing from the catalogue; the raw key stays the last resort.
+      const fallback =
+        params && typeof params.defaultValue === 'string' ? params.defaultValue : key
+      const text = value ?? fallback
       return interpolate(text, params)
     },
     [currentLocale],
