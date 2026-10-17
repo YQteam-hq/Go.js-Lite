@@ -12,7 +12,7 @@
 
 ---
 
-## What's new in 1.0.0 (unreleased)
+## What's new in 1.0.0
 
 - **Two-factor authentication** — per-user TOTP, with eight single-use recovery codes issued at enrolment and a code challenge at login. See [docs/mfa.md](docs/mfa.md).
 - **Hardened uploads** — filenames are validated before the file is written, and active SVG is refused unless it is explicitly allowed.
