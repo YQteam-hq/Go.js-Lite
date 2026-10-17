@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface Options {
   delay?: number
@@ -16,17 +16,34 @@ export function useLongPress<T extends HTMLElement>(
   const movedRef = useRef(false)
   const startPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
 
+  // A gesture that never resolves, because the row unmounted mid-press or the
+  // route changed, must not leave a timer that fires into a dead tree.
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+    },
+    [],
+  )
+
+  // Both the timer path and the pointer-up path land here. The guard keeps the
+  // second call of a finished gesture a no-op, so onEnd fires exactly once.
   const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
+    if (timerRef.current === null) return
+    window.clearTimeout(timerRef.current)
+    timerRef.current = null
     setActive(false)
     onEnd?.()
   }, [onEnd])
 
   const start = useCallback(
     (clientX: number, clientY: number) => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
       movedRef.current = false
       startPosRef.current = { x: clientX, y: clientY }
       setActive(true)
