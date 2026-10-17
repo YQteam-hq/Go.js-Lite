@@ -2,6 +2,12 @@ import { useMemo } from 'react'
 import { selectLanguage, useUiStore } from '@/stores/uiStore'
 import { useI18n } from '@/hooks/useI18n'
 
+/**
+ * Formats a byte count with a binary unit.
+ *
+ * Non-finite and negative inputs carry no meaningful size and render as an
+ * em dash, the placeholder the panel uses for unavailable values.
+ */
 export function formatBytes(bytes: number, decimals = 1): string {
   if (!Number.isFinite(bytes)) return '—'
   if (bytes === 0) return '0 B'
@@ -11,6 +17,8 @@ export function formatBytes(bytes: number, decimals = 1): string {
   const dm = decimals < 0 ? 0 : decimals
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']
 
+  // Clamp the index so sub-byte values stay in the byte unit and values past
+  // the last unit keep it instead of indexing outside the array.
   const i = Math.min(Math.max(Math.floor(Math.log(bytes) / Math.log(k)), 0), sizes.length - 1)
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
