@@ -10,7 +10,7 @@
     "dev:apache": "VITE_VARIANT=apache vite",
     "dev:ssh": "VITE_VARIANT=ssh vite",
     "dev:docker": "VITE_VARIANT=docker vite",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/check-shell-assets.mjs && tsc -b && vite build",
     "build:panel": "VITE_VARIANT=panel npm run build",
     "build:apache": "VITE_VARIANT=apache npm run build",
     "build:ssh": "VITE_VARIANT=ssh npm run build",

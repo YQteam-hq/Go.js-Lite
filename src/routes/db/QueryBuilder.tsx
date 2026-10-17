@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
 import { toast } from '@/components/ui/Toast'
+import { useI18n } from '@/hooks/useI18n'
 import { dbApi } from '@/api/db'
 import type { DbQueryCondition, DbQueryInput, DbQueryOrder, DbQueryResult } from '@/api/db'
 import type { DbColumn } from '@shared/types'
@@ -50,6 +51,7 @@ export default function QueryBuilder() {
   const [searchParams] = useSearchParams()
   const database = searchParams.get('database') || ''
   const table = searchParams.get('table') || ''
+  const { t } = useI18n()
 
   const [columns, setColumns] = useState<DbColumn[]>([])
   const [selectedColumns, setSelectedColumns] = useState<string[]>([])
@@ -72,13 +74,13 @@ export default function QueryBuilder() {
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Failed to load table structure',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.structure.loadStructureFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setLoading(false)
     }
-  }, [connId, database, table])
+  }, [connId, database, table, t])
 
   useEffect(() => {
     loadStructure()
@@ -163,7 +165,7 @@ export default function QueryBuilder() {
 
   const runQuery = async (mode: 'preview' | 'run') => {
     if (!connId || !database || !table) {
-      toast({ type: 'warning', title: 'Select a database and a table first' })
+      toast({ type: 'warning', title: t('db.queryBuilder.selectDatabaseAndTable') })
       return
     }
 
@@ -176,14 +178,17 @@ export default function QueryBuilder() {
       setResult(response)
       toast({
         type: 'success',
-        title: mode === 'preview' ? 'Preview generated' : 'Query executed',
-        description: `${response.count} row(s) returned`,
+        title:
+          mode === 'preview'
+            ? t('db.queryBuilder.previewGenerated')
+            : t('db.queryBuilder.queryExecuted'),
+        description: t('db.queryBuilder.rowsReturned', { count: response.count }),
       })
     } catch (error) {
       toast({
         type: 'error',
-        title: 'Query failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: t('db.queryBuilder.queryFailed'),
+        description: error instanceof Error ? error.message : t('common.unknownError'),
       })
     } finally {
       setPreviewing(false)
@@ -203,20 +208,20 @@ export default function QueryBuilder() {
           <ArrowLeft size={18} />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-semibold text-fg">Query builder</h1>
+          <h1 className="text-lg font-semibold text-fg">{t('db.queryBuilder.title')}</h1>
           <p className="text-xs text-fg-subtle truncate">
             {database}.{table}
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={loadStructure} loading={loading}>
           <RefreshCw size={14} />
-          Reload
+          {t('common.reload')}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Columns</CardTitle>
+          <CardTitle>{t('db.structure.tabColumns')}</CardTitle>
         </CardHeader>
         <CardBody>
           {loading ? (
@@ -224,7 +229,7 @@ export default function QueryBuilder() {
               <Spinner />
             </div>
           ) : columns.length === 0 ? (
-            <p className="text-sm text-fg-muted">No columns available</p>
+            <p className="text-sm text-fg-muted">{t('db.queryBuilder.noColumnsAvailable')}</p>
           ) : (
             <div className="flex flex-wrap gap-4">
               {columns.map((column) => (
@@ -241,22 +246,24 @@ export default function QueryBuilder() {
             </div>
           )}
           <p className="mt-2 text-xs text-fg-subtle">
-            {selectedColumns.length === 0 ? 'No selection means SELECT *' : `${selectedColumns.length} column(s) selected`}
+            {selectedColumns.length === 0
+              ? t('db.queryBuilder.noSelectionMeansAll')
+              : t('db.queryBuilder.columnsSelected', { count: selectedColumns.length })}
           </p>
         </CardBody>
       </Card>
 
       <Card>
         <CardHeader className="flex items-center justify-between gap-3">
-          <CardTitle>Conditions</CardTitle>
+          <CardTitle>{t('db.queryBuilder.conditions')}</CardTitle>
           <Button variant="secondary" size="sm" onClick={addCondition}>
             <Plus size={14} />
-            Add condition
+            {t('db.queryBuilder.addCondition')}
           </Button>
         </CardHeader>
         <CardBody className="space-y-3">
           {conditions.length === 0 ? (
-            <p className="text-sm text-fg-muted">No conditions. All rows will match.</p>
+            <p className="text-sm text-fg-muted">{t('db.queryBuilder.noConditions')}</p>
           ) : (
             conditions.map((row) => (
               <div key={row.id} className="flex flex-wrap items-center gap-2">
@@ -286,14 +293,18 @@ export default function QueryBuilder() {
                   <Input
                     value={row.value}
                     disabled={VALUELESS_OPERATORS.includes(row.operator)}
-                    placeholder={row.operator === 'in' ? 'value1, value2' : 'value'}
+                    placeholder={
+                      row.operator === 'in'
+                        ? t('db.queryBuilder.conditionInPlaceholder')
+                        : t('db.queryBuilder.conditionPlaceholder')
+                    }
                     onChange={(event) => updateCondition(row.id, { value: event.target.value })}
                   />
                 </div>
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Remove condition"
+                  aria-label={t('db.queryBuilder.removeCondition')}
                   onClick={() => removeCondition(row.id)}
                 >
                   <Trash2 size={14} />
@@ -306,7 +317,7 @@ export default function QueryBuilder() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Group by</CardTitle>
+          <CardTitle>{t('db.queryBuilder.groupBy')}</CardTitle>
         </CardHeader>
         <CardBody>
           <div className="flex flex-wrap gap-4">
@@ -327,15 +338,15 @@ export default function QueryBuilder() {
 
       <Card>
         <CardHeader className="flex items-center justify-between gap-3">
-          <CardTitle>Order by</CardTitle>
+          <CardTitle>{t('db.queryBuilder.orderBy')}</CardTitle>
           <Button variant="secondary" size="sm" onClick={addOrder}>
             <Plus size={14} />
-            Add order
+            {t('db.queryBuilder.addOrder')}
           </Button>
         </CardHeader>
         <CardBody className="space-y-3">
           {orderBy.length === 0 ? (
-            <p className="text-sm text-fg-muted">No ordering applied.</p>
+            <p className="text-sm text-fg-muted">{t('db.queryBuilder.noOrdering')}</p>
           ) : (
             orderBy.map((row) => (
               <div key={row.id} className="flex flex-wrap items-center gap-2">
@@ -363,7 +374,7 @@ export default function QueryBuilder() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Remove order"
+                  aria-label={t('db.queryBuilder.removeOrder')}
                   onClick={() => removeOrder(row.id)}
                 >
                   <Trash2 size={14} />
@@ -377,7 +388,7 @@ export default function QueryBuilder() {
       <Card>
         <CardBody className="flex flex-wrap items-end gap-3">
           <label className="block space-y-1">
-            <span className="text-xs font-medium text-fg-muted">Row limit</span>
+            <span className="text-xs font-medium text-fg-muted">{t('db.queryBuilder.rowLimit')}</span>
             <Input
               className="w-32"
               value={limit}
@@ -390,13 +401,13 @@ export default function QueryBuilder() {
             loading={previewing}
             disabled={previewing || running}
           >
-            Preview (10 rows)
+            {t('db.queryBuilder.previewRows')}
           </Button>
           <Button onClick={() => runQuery('run')} loading={running} disabled={previewing || running}>
             <Play size={16} />
-            Run query
+            {t('db.queryBuilder.runQuery')}
           </Button>
-          {result && <Badge variant="muted">{result.count} row(s)</Badge>}
+          {result && <Badge variant="muted">{t('db.rowCount', { count: result.count })}</Badge>}
         </CardBody>
       </Card>
 
@@ -404,7 +415,7 @@ export default function QueryBuilder() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Generated SQL</CardTitle>
+              <CardTitle>{t('db.queryBuilder.generatedSql')}</CardTitle>
             </CardHeader>
             <CardBody>
               <pre className="overflow-x-auto rounded-md bg-bg-sunken p-3 text-xs text-fg">
@@ -415,11 +426,11 @@ export default function QueryBuilder() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Result</CardTitle>
+              <CardTitle>{t('db.queryBuilder.result')}</CardTitle>
             </CardHeader>
             <CardBody>
               {result.data.length === 0 ? (
-                <p className="py-6 text-center text-sm text-fg-muted">No rows returned</p>
+                <p className="py-6 text-center text-sm text-fg-muted">{t('db.queryBuilder.noRowsReturned')}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">

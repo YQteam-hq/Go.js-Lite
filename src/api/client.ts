@@ -33,11 +33,44 @@ function readErrorFields(error: unknown): { code?: string; message?: string } {
   }
 }
 
-function readRetryAfter(value: unknown): number | undefined {
+// Reads a finite number out of a body field, accepting numbers and numeric
+// strings; anything else yields undefined. Values that parse to a non-finite
+// number ('NaN', 'Infinity', and the NaN/Infinity numbers themselves) are
+// rejected too, so a hint is either a real number or nothing.
+function extractFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+  return undefined
+}
+
+function readRetryAfterFromBody(value: unknown): number | undefined {
   const record = readRecord(value)
   if (!record) return undefined
   const retry = record.retryAfter ?? record.retry_after
-  return typeof retry === 'number' && Number.isFinite(retry) ? retry : undefined
+  return extractFiniteNumber(retry)
+}
+
+// The HTTP Retry-After header carries either a number of seconds or an
+// HTTP-date. Servers send it on 429 and 503 responses, and it is the only
+// retry hint when the body is empty or not JSON.
+function parseRetryAfterHeader(value: string | null): number | undefined {
+  if (!value) return undefined
+  const trimmed = value.trim()
+  if (trimmed === '') return undefined
+
+  // Delay-seconds form: a plain non-negative integer, the common case.
+  if (/^\d+$/.test(trimmed)) {
+    return extractFiniteNumber(trimmed)
+  }
+
+  // HTTP-date form: an absolute timestamp. A date in the past clamps to 0
+  // seconds, which tells the caller to retry immediately.
+  const date = Date.parse(trimmed)
+  if (Number.isNaN(date)) return undefined
+  return Math.max(0, Math.ceil((date - Date.now()) / 1000))
 }
 
 export async function apiFetch<T = unknown>(
@@ -91,7 +124,10 @@ export async function apiFetch<T = unknown>(
     } catch {
       errBody = null
     }
-    throw buildApiError(res.status, errBody, res.statusText)
+    throw buildApiError(res.status, errBody, {
+      fallbackMessage: res.statusText,
+      retryAfterHeader: parseRetryAfterHeader(res.headers.get('retry-after')),
+    })
   }
 
   const responseType = options.responseType || 'json'
@@ -119,12 +155,11 @@ export async function apiFetch<T = unknown>(
   if (envelope) {
     if (envelope.ok === false) {
       const fields = readErrorFields(envelope.error)
-      throw buildApiError(
-        res.status,
-        envelope.error,
-        fields.message || res.statusText || 'Request failed',
-        fields.code,
-      )
+      throw buildApiError(res.status, envelope.error, {
+        fallbackMessage: fields.message || res.statusText || 'Request failed',
+        fallbackCode: fields.code,
+        retryAfterHeader: parseRetryAfterHeader(res.headers.get('retry-after')),
+      })
     }
     if (envelope.ok === true && 'data' in envelope) {
       const payload = envelope.data
@@ -140,12 +175,23 @@ export async function apiFetch<T = unknown>(
   return data as T
 }
 
+// What a failed response contributes to the error beyond its status: the
+// message and code to fall back to when the body carries neither, and the
+// retry hint parsed from the Retry-After header, which the body hint wins
+// over. Grouping them keeps buildApiError at three parameters no matter how
+// many response details participate.
+interface ApiErrorFallbacks {
+  fallbackMessage: string
+  fallbackCode?: string
+  retryAfterHeader?: number
+}
+
 function buildApiError(
   status: number,
   errBody: unknown,
-  fallbackMessage: string,
-  fallbackCode?: string,
+  fallbacks: ApiErrorFallbacks,
 ): ApiError {
+  const { fallbackMessage, fallbackCode, retryAfterHeader } = fallbacks
   const container = readRecord(errBody)
   const nestedError = container ? container.error : undefined
   const raw: unknown = nestedError ? nestedError : errBody
@@ -160,7 +206,8 @@ function buildApiError(
     (typeof raw === 'string' ? raw : undefined) ||
     fallbackMessage ||
     `HTTP ${status}`
-  const retryAfter = readRetryAfter(raw)
+  // The body wins when it carries a hint; the header is the fallback.
+  const retryAfter = readRetryAfterFromBody(raw) ?? retryAfterHeader
   return new ApiError(code, message, status, { ...(rawRecord ?? {}), retryAfter })
 }
 
@@ -263,6 +310,6 @@ export class ApiError extends Error {
       this.status = status
       this.payload = payload
     }
-    this.retryAfter = readRetryAfter(payload)
+    this.retryAfter = readRetryAfterFromBody(payload)
   }
 }

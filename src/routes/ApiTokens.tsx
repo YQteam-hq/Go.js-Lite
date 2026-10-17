@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonTable } from '@/components/ui/Skeleton'
 import { toast } from '@/components/ui/Toast'
 import { apiTokensApi } from '@/api/apiTokens'
+import { copyText } from '@/lib/clipboard'
 import { useFormat } from '@/lib/format'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
@@ -82,13 +83,13 @@ export default function ApiTokens() {
 
   const copyToken = async () => {
     if (!createdToken) return
-    try {
-      await navigator.clipboard.writeText(createdToken.plainToken)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
+    const copied = await copyText(createdToken.plainToken)
+    if (!copied) {
       toast({ type: 'error', title: t('apiTokens.copyFailed') })
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const handleRevoke = async () => {

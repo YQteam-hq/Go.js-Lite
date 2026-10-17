@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   getPushSupport,
   getServiceWorkerContainer,
@@ -199,5 +201,49 @@ describe('urlBase64ToUint8Array', () => {
     expect(Array.from(urlBase64ToUint8Array('-_-_'))).toEqual(
       Array.from(urlBase64ToUint8Array('+/+/')),
     );
+  });
+});
+
+describe('service worker shell', () => {
+  const swSource = readFileSync(resolve(process.cwd(), 'public/sw.js'), 'utf8');
+  const offlineUrl = swSource.match(/const OFFLINE_URL = '([^']+)'/)?.[1];
+
+  // The shell list references OFFLINE_URL by name, so the identifier is
+  // resolved to its literal before the quoted entries are collected.
+  function readShellAssets(): string[] {
+    const shellLine = swSource.split('\n').find((line) => line.startsWith('const SHELL_ASSETS'));
+    const resolved = offlineUrl
+      ? shellLine?.split('OFFLINE_URL').join(`'${offlineUrl}'`)
+      : shellLine;
+    return [...(resolved ?? '').matchAll(/'([^']*)'/g)].map((match) => match[1]);
+  }
+
+  it('ships the offline fallback page next to the worker', () => {
+    expect(existsSync(resolve(process.cwd(), 'public/offline.html'))).toBe(true);
+  });
+
+  it('points the offline fallback at the offline page', () => {
+    expect(swSource).toContain("const OFFLINE_URL = './offline.html';");
+  });
+
+  it('precaches the offline fallback page in the shell', () => {
+    // A cold offline navigation falls back to OFFLINE_URL, so the page has to
+    // be part of the install-time shell instead of the plain-text reply.
+    expect(offlineUrl).toBeDefined();
+    expect(readShellAssets()).toContain(offlineUrl);
+  });
+
+  it('precaches only files that exist next to the worker', () => {
+    // cache.addAll rejects the whole install when a single entry 404s, so
+    // every shell asset has to resolve to a real file in public/.
+    const assets = readShellAssets();
+    expect(assets.length).toBeGreaterThan(0);
+    for (const asset of assets) {
+      const path = asset.replace(/^\.\//, '');
+      // './' and './index.html' are the document at the project root; every
+      // other entry is copied from public/.
+      const file = path === '' || path === 'index.html' ? 'index.html' : resolve('public', path);
+      expect(existsSync(resolve(process.cwd(), file))).toBe(true);
+    }
   });
 });

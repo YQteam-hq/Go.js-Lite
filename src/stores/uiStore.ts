@@ -56,6 +56,12 @@ export interface ToastItem {
   duration?: number
 }
 
+/** Default lifetime of a toast, in milliseconds. */
+export const DEFAULT_TOAST_DURATION = 3000
+
+/** Oldest toasts are dropped past this limit so the stack stays readable. */
+export const MAX_VISIBLE_TOASTS = 4
+
 let toastId = 0
 
 export const useUiStore = create<UiState>()(
@@ -107,15 +113,13 @@ export const useUiStore = create<UiState>()(
 
       addToast: (toast) => {
         const id = `toast-${++toastId}`
-        const duration = toast.duration ?? 3000
-        set({
-          toasts: [...get().toasts, { ...toast, id }],
-        })
-        if (duration > 0) {
-          setTimeout(() => {
-            get().removeToast(id)
-          }, duration)
-        }
+        const next = [
+          ...get().toasts,
+          { ...toast, id, duration: toast.duration ?? DEFAULT_TOAST_DURATION },
+        ]
+        // Dismissal is owned by the toast itself so it can pause while the
+        // pointer or the focus rests on it, the store only caps the stack.
+        set({ toasts: next.slice(-MAX_VISIBLE_TOASTS) })
         return id
       },
       removeToast: (id) => {

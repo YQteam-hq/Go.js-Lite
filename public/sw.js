@@ -1,8 +1,10 @@
 const CACHE_VERSION = 'gojs-shell-v1';
 const SHELL_CACHE = CACHE_VERSION + '-shell';
 const ASSET_CACHE = CACHE_VERSION + '-asset';
-const SHELL_ASSETS = ['./', './index.html', './favicon.svg', './manifest.webmanifest'];
 const OFFLINE_URL = './offline.html';
+// The navigation handler falls back to OFFLINE_URL, so the page has to be part
+// of the install-time shell or a cold offline load gets the plain-text reply.
+const SHELL_ASSETS = ['./', './index.html', './favicon.svg', './manifest.webmanifest', OFFLINE_URL];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

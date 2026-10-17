@@ -9,6 +9,7 @@ import { authApi } from '@/api/auth'
 import { toast } from '@/components/ui/Toast'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
+import { copyText } from '@/lib/clipboard'
 import { useAuthStore } from '@/stores/authStore'
 import { setCsrfToken } from '@/api/client'
 import { useAuthBootstrap } from '@/hooks/useAuth'
@@ -141,9 +142,13 @@ export default function Install() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => {
-                      navigator.clipboard.writeText(panelUrl)
-                      toast({ type: 'success', title: '已复制链接' })
+                    onClick={async () => {
+                      const copied = await copyText(panelUrl)
+                      toast(
+                        copied
+                          ? { type: 'success', title: t('common.copied') }
+                          : { type: 'error', title: t('common.copyFailed') },
+                      )
                     }}
                   >
                     <Copy size={16} />

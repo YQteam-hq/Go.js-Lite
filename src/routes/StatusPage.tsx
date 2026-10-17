@@ -9,6 +9,7 @@ import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { StorageMeter } from '@/components/disk/StorageMeter'
 import { statusApi } from '@/api/status'
 import { useFormat } from '@/lib/format'
+import { copyText } from '@/lib/clipboard'
 import { deriveOverallStatus, usagePercent, type OverallStatus } from '@/lib/usage'
 import { useI18n } from '@/hooks/useI18n'
 
@@ -67,13 +68,10 @@ export default function StatusPage() {
       : 'unknown'
 
   const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch {
-      setCopied(false)
-    }
+    const copied = await copyText(window.location.href)
+    setCopied(copied)
+    if (!copied) return
+    window.setTimeout(() => setCopied(false), 2000)
   }, [])
 
   const refresh = () => {

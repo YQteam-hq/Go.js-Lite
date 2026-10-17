@@ -68,7 +68,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
       >
-        {(title || !closeOnBackdrop === false) && (
+        {title && (
           <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
             <h3 id={titleId} className="text-base font-semibold text-fg">{title}</h3>
             <Button

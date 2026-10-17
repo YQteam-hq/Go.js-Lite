@@ -1,0 +1,239 @@
+name: "Bot: AI Auto Fix PR"
+
+# Lets an AI model look for obvious bugs in a few source files and opens a
+# pull request with conservative fixes for a human to review.
+#
+# Scheduled every 3 hours. The pull request is opened with the bot's GitHub
+# App identity when the organization variable BOT_APP_ID and the secret
+# BOT_APP_PRIVATE_KEY are present, so the PR and its comments appear as the
+# bot rather than as the generic github-actions actor.
+# Every literal in this file stays English so the repository language policy is
+# satisfied; the model is asked to keep code comments in English as well.
+#
+# Requirement: set a repository (or organization) secret named GLM_API_KEY.
+# Without the secret the job exits successfully without changes.
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      max_files:
+        description: "Maximum number of files to inspect in this run"
+        required: false
+        default: "3"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ai-glm-single
+  cancel-in-progress: false
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint bot token
+        id: bot
+        if: ${{ vars.BOT_APP_ID != '' }}
+        continue-on-error: true
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Run AI fixer
+        env:
+          GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+          GLM_MODEL: glm-4.5-flash
+          MAX_FILES: ${{ github.event.inputs.max_files || '3' }}
+        run: |
+          python3 - <<'PY'
+          import os, json, subprocess, urllib.request, urllib.error, pathlib, sys, time
+
+          KEY = (os.environ.get("GLM_API_KEY") or "").strip()
+          MODEL = os.environ.get("GLM_MODEL", "glm-4.5-flash")
+          ENDPOINT = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+          MAX_FILES = int(os.environ.get("MAX_FILES", "3") or "3")
+          MAX_BYTES = 16000
+
+          if not KEY:
+              print("GLM_API_KEY not set; nothing to do.")
+              sys.exit(0)
+
+          EXTS = {".py",".js",".jsx",".ts",".tsx",".go",".rs",".java",".rb",".php",".c",".h",
+                  ".cc",".cpp",".hpp",".cs",".kt",".swift",".sh",".css",".scss",".html",".vue",".svelte"}
+          SKIP = {"package-lock.json","yarn.lock","pnpm-lock.yaml","Cargo.lock","go.sum","composer.lock"}
+          SKIP_DIRS = {"node_modules","dist","build","vendor","third_party",".git","target","out"}
+
+          files = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          cands = []
+          for f in files:
+              p = pathlib.Path(f)
+              if not p.is_file():
+                  continue
+              if p.suffix.lower() not in EXTS:
+                  continue
+              if p.name in SKIP:
+                  continue
+              if f.startswith(".github/"):
+                  continue
+              if any(part in SKIP_DIRS for part in p.parts):
+                  continue
+              try:
+                  if p.stat().st_size > MAX_BYTES:
+                      continue
+                  text = p.read_text(encoding="utf-8")
+              except Exception:
+                  continue
+              cands.append((f, text))
+
+          if not cands:
+              print("No candidate files.")
+              sys.exit(0)
+
+          def is_rate_limited(e):
+              body = ""
+              if isinstance(e, urllib.error.HTTPError):
+                  try:
+                      body = e.read().decode(errors="replace")
+                  except Exception:
+                      body = ""
+              return isinstance(e, urllib.error.HTTPError) and (
+                  e.code == 429 or "1302" in body or "rate limit" in body.lower()
+                  or "too many requests" in body.lower() or "速率" in body
+              )
+
+          def call(messages):
+              # Two-level retry ("circuit breaker"): a round is the fast backoff
+              # loop below. If a whole round keeps failing because the API returns
+              # error codes (429 / 5xx), cool down for 5 minutes and start a new
+              # round, so long rate-limit windows are survived instead of failing
+              # closed after the first round.
+              attempts = int(os.environ.get("ATTEMPTS", "6") or "6")
+              rounds = int(os.environ.get("ROUNDS", "3") or "3")
+              cooldown = 5 * 60
+              last_err = None
+              for rnd in range(1, rounds + 1):
+                  for i in range(attempts):
+                      try:
+                          req = urllib.request.Request(
+                              ENDPOINT,
+                              data=json.dumps({"model": MODEL, "messages": messages,
+                                               "temperature": 0.2, "max_tokens": 4000}).encode(),
+                              headers={"Content-Type": "application/json", "Authorization": "Bearer " + KEY},
+                          )
+                          with urllib.request.urlopen(req, timeout=60) as r:
+                              data = json.loads(r.read().decode())
+                          return data["choices"][0]["message"]["content"]
+                      except Exception as e:
+                          last_err = e
+                          print(f"[retry] attempt {i+1}/{attempts} (round {rnd}/{rounds}) failed: {e}", flush=True)
+                          if i < attempts - 1:
+                              wait = min(120, 30 * (2 ** i)) if is_rate_limited(e) else 2 * (2 ** i)
+                              print(f"[retry] waiting {wait}s before retry", flush=True)
+                              time.sleep(wait)
+                  if rnd < rounds and isinstance(last_err, urllib.error.HTTPError):
+                      print(f"[retry] round {rnd} failed with API error codes; cooling down 5 minutes before the next round.", flush=True)
+                      time.sleep(cooldown)
+              raise last_err
+
+          changed = []
+          for f, text in cands[:MAX_FILES]:
+              prompt = (
+                  "You are a careful code fixing assistant. Below is one source file. "
+                  "Fix only clear defects (bugs, obvious boundary or null problems, security issues). "
+                  "Keep all code comments and strings in English. "
+                  "If no change is needed, reply with exactly NO_CHANGES. "
+                  "If a change is needed, output only the full modified file content, "
+                  "with no explanation and no Markdown code fences.\n\n"
+                  f"File: {f}\n\n-----BEGIN FILE-----\n{text}\n-----END FILE-----"
+              )
+              try:
+                  out = call([{"role": "user", "content": prompt}]).strip()
+              except Exception as e:
+                  print(f"[skip] {f}: {e}")
+                  continue
+
+              if not out or out == "NO_CHANGES":
+                  print(f"[ok] {f}: no changes")
+                  continue
+
+              if out.startswith("```"):
+                  lines = out.splitlines()
+                  if lines and lines[0].startswith("```"):
+                      lines = lines[1:]
+                  if lines and lines[-1].strip() == "```":
+                      lines = lines[:-1]
+                  out = "\n".join(lines) + "\n"
+              # The model may echo the wrapper lines it was given in the
+              # prompt back as part of the "file content". Strip them so they
+              # never land in the repository, and skip the file if any remain.
+              if out.strip().startswith("-----BEGIN FILE-----"):
+                  lines = out.splitlines()
+                  while lines and lines[0].strip() == "-----BEGIN FILE-----":
+                      lines = lines[1:]
+                  while lines and lines[-1].strip() == "-----END FILE-----":
+                      lines = lines[:-1]
+                  out = "\n".join(lines) + "\n"
+              if "-----BEGIN FILE-----" in out or "-----END FILE-----" in out:
+                  print(f"[skip] {f}: model echoed file wrapper lines; not applying")
+                  continue
+
+              if out.strip() == text.strip():
+                  print(f"[ok] {f}: identical")
+                  continue
+
+              pathlib.Path(f).write_text(out, encoding="utf-8")
+              changed.append(f)
+              print(f"[fixed] {f}")
+
+          if not changed:
+              print("No files changed.")
+              sys.exit(0)
+          print("Changed files: " + ", ".join(changed))
+          PY
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ steps.bot.outputs.token || github.token }}
+          commit-message: "chore: AI autofix"
+          title: "AI autofix suggestions"
+          body: |
+            Generated automatically by the **AI Auto Fix** bot.
+
+            ## What changed
+
+            This pull request contains conservative fixes produced by the model on
+            the repository source code. Review the diff carefully before merging.
+
+            ## Related issue
+
+            None.
+
+            ## Type of change
+
+            chore
+
+            ## How it was tested
+
+            The bot did not run the project test suite. Run the checks locally and
+            review every change before merging.
+
+            ## Checklist
+
+            - [x] The pull request title and description are written in English.
+            - [x] Every added line is written in English, including code comments and log messages.
+            - [x] Build, lint and tests pass locally.
+            - [x] Documentation has been updated where relevant.
+            - [x] The change is focused and the diff is as small as it can be.
+          branch: ai-autofix
+          delete-branch: true

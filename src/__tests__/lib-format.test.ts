@@ -59,6 +59,22 @@ describe('formatBytes', () => {
     expect(formatBytes(1536, 3)).toBe('1.5 KB');
     expect(formatBytes(1536, -1)).toBe('2 KB');
   });
+
+  it('rejects non-finite input', () => {
+    expect(formatBytes(Number.NaN)).toBe('\u2014');
+    expect(formatBytes(Number.POSITIVE_INFINITY)).toBe('\u2014');
+    expect(formatBytes(Number.NEGATIVE_INFINITY)).toBe('\u2014');
+  });
+
+  it('keeps sub-byte values inside the byte unit', () => {
+    expect(formatBytes(1)).toBe('1 B');
+    expect(formatBytes(0.5)).toBe('0.5 B');
+  });
+
+  it('extends to exabytes and clamps beyond them', () => {
+    expect(formatBytes(1024 ** 6)).toBe('1 EB');
+    expect(formatBytes(1024 ** 7)).toBe('1024 EB');
+  });
 });
 
 describe('formatDate', () => {
