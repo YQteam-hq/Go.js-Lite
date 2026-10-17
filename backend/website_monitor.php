@@ -18,12 +18,19 @@ function gojs_website_monitor_load_config(): array {
     return gojs_read_json_lock_safe(gojs_website_monitor_config_path(), array());
 }
 
+/**
+ * Persists the monitor configuration.
+ *
+ * The calling handler owns the response, so the helper reports the outcome
+ * instead of writing one. Responding here ended the request before the
+ * handler could return the saved configuration, which turned the update
+ * endpoint into a {"success":true} body that no client expects.
+ *
+ * @param array $config Configuration to store
+ * @return array Returns success, plus the write error when the store rejected the change
+ */
 function gojs_website_monitor_save_config(array $config): array {
-    $result = gojs_write_json_lock_safe(gojs_website_monitor_config_path(), $config, true);
-    if (!$result['success']) {
-        gojs_json_response(array('success' => false, 'error' => $result['error']));
-    }
-    gojs_json_response(array('success' => true));
+    return gojs_write_json_lock_safe(gojs_website_monitor_config_path(), $config, true);
 }
 
 function gojs_website_monitor_load_history(): array {
@@ -280,8 +287,16 @@ function gojs_api_website_monitor_update_config() {
     if (isset($data['check_interval'])) {
         $config['check_interval'] = (int)$data['check_interval'];
     }
-    
-    gojs_website_monitor_save_config($config);
+
+    $saved = gojs_website_monitor_save_config($config);
+    if (empty($saved['success'])) {
+        gojs_json_response(null, array(
+            'code' => 'write_failed',
+            'message' => isset($saved['error']) ? $saved['error'] : 'Cannot save the monitor configuration',
+        ), 500);
+        return;
+    }
+
     gojs_json_response($config);
 }
 

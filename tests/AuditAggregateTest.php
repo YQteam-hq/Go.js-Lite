@@ -28,14 +28,22 @@ class AuditAggregateTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * Seeds three recent entries and one old entry.
+     *
+     * The recent entries are anchored to the start of the current hour
+     * instead of the current second. Anchoring them to time() put them in two
+     * different hour buckets during the first three minutes of an hour, which
+     * made the hourly aggregate assertion fail depending on the wall clock.
+     */
     private function seed(): void
     {
-        $now = time();
+        $hour_start = strtotime(date('Y-m-d H:00:00'));
         $entries = array(
-            array('timestamp' => $now - 60, 'action' => 'file.save', 'target' => '/a', 'result' => true, 'user_id' => 'u_a'),
-            array('timestamp' => $now - 120, 'action' => 'file.save', 'target' => '/b', 'result' => false, 'user_id' => 'u_a'),
-            array('timestamp' => $now - 180, 'action' => 'db.sql', 'target' => 'SELECT 1', 'result' => true, 'user_id' => 'u_b'),
-            array('timestamp' => $now - 200 * 86400, 'action' => 'old.entry', 'target' => 'x', 'result' => true, 'user_id' => 'u_a'),
+            array('timestamp' => $hour_start - 60, 'action' => 'file.save', 'target' => '/a', 'result' => true, 'user_id' => 'u_a'),
+            array('timestamp' => $hour_start - 120, 'action' => 'file.save', 'target' => '/b', 'result' => false, 'user_id' => 'u_a'),
+            array('timestamp' => $hour_start - 180, 'action' => 'db.sql', 'target' => 'SELECT 1', 'result' => true, 'user_id' => 'u_b'),
+            array('timestamp' => $hour_start - 200 * 86400, 'action' => 'old.entry', 'target' => 'x', 'result' => true, 'user_id' => 'u_a'),
         );
         @file_put_contents(CONFIG_DIR . '/operation_log.json', json_encode($entries));
     }

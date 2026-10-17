@@ -24,6 +24,26 @@ describe('Input', () => {
     expect(input.className).toContain('input-invalid');
   });
 
+  it('exposes aria-invalid when the field is invalid', () => {
+    const { container } = render(<Input invalid />);
+    expect(container.querySelector('input')?.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('does not expose aria-invalid by default', () => {
+    const { container } = render(<Input />);
+    expect(container.querySelector('input')?.hasAttribute('aria-invalid')).toBe(false);
+  });
+
+  it('lets an explicit aria-invalid value override the invalid prop', () => {
+    const { container } = render(<Input invalid aria-invalid="spelling" />);
+    expect(container.querySelector('input')?.getAttribute('aria-invalid')).toBe('spelling');
+  });
+
+  it('forwards aria-describedby so errors can be linked', () => {
+    const { container } = render(<Input aria-describedby="email-error" />);
+    expect(container.querySelector('input')?.getAttribute('aria-describedby')).toBe('email-error');
+  });
+
   it('forwards the ref to the underlying input element', () => {
     const ref = createRef<HTMLInputElement>();
     render(<Input ref={ref} placeholder="Name" />);
@@ -46,5 +66,15 @@ describe('Textarea', () => {
   it('marks the textarea invalid when requested', () => {
     const { container } = render(<Textarea invalid placeholder="Notes" />);
     expect(container.querySelector('textarea')?.className).toContain('input-invalid');
+  });
+
+  it('exposes aria-invalid when the field is invalid', () => {
+    const { container } = render(<Textarea invalid />);
+    expect(container.querySelector('textarea')?.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('forwards aria-describedby so errors can be linked', () => {
+    const { container } = render(<Textarea aria-describedby="bio-error" />);
+    expect(container.querySelector('textarea')?.getAttribute('aria-describedby')).toBe('bio-error');
   });
 });

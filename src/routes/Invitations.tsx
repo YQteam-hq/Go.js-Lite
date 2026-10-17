@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonTable } from '@/components/ui/Skeleton'
 import { toast } from '@/components/ui/Toast'
 import { invitationsApi, type InvitationRecord, type InvitationRole } from '@/api/invitations'
+import { copyText } from '@/lib/clipboard'
 import { useI18n } from '@/hooks/useI18n'
 import { useFormat } from '@/lib/format'
 import { resolveErrorText } from '@/lib/errorMessages'
@@ -94,12 +95,12 @@ export default function Invitations() {
   }
 
   const copyLink = async (link: string) => {
-    try {
-      await navigator.clipboard.writeText(link)
-      toast({ type: 'success', title: t('common.copied') })
-    } catch {
-      toast({ type: 'error', title: t('common.failure') })
-    }
+    const copied = await copyText(link)
+    toast(
+      copied
+        ? { type: 'success', title: t('common.copied') }
+        : { type: 'error', title: t('common.copyFailed') },
+    )
   }
 
   const inviteLink = created?.invite_url

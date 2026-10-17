@@ -12,6 +12,7 @@ import { useI18n } from '@/hooks/useI18n'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import { buildNavItems } from '@/lib/navigation'
+import { isCommandPaletteShortcut } from '@/lib/shortcuts'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -30,8 +31,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== 'k') return
-      if (!event.metaKey && !event.ctrlKey) return
+      if (!isCommandPaletteShortcut(event)) return
       event.preventDefault()
       setPaletteOpen((open) => !open)
     }

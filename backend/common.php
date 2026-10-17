@@ -50,19 +50,65 @@ function gojs_get_capabilities() {
     return $capabilities;
 }
 
+/**
+ * Reduces one X-Forwarded-For entry to a bare IP address.
+ *
+ * Proxies append the value they received, so an entry can carry a port or the
+ * bracketed form of an IPv6 address. A bare address is the common case and is
+ * validated without pattern matching; the two decorated forms are unwrapped
+ * only after that check fails. Anything that is not a valid address is dropped
+ * instead of being trusted.
+ *
+ * @param string $value Raw entry taken from the header
+ * @return string Returns the address, or an empty string when the entry is not one
+ */
+function gojs_forwarded_ip($value) {
+    $value = trim((string)$value);
+    if ($value === '') {
+        return '';
+    }
+    if (filter_var($value, FILTER_VALIDATE_IP) !== false) {
+        return $value;
+    }
+
+    $unwrapped = $value;
+    if (strpos($unwrapped, '[') === 0) {
+        $unwrapped = preg_match('/^\[([^\]]+)\](?::\d+)?$/', $unwrapped, $matches) ? $matches[1] : '';
+    } elseif (preg_match('/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/', $unwrapped, $matches)) {
+        $unwrapped = $matches[1];
+    }
+    if ($unwrapped === '' || filter_var($unwrapped, FILTER_VALIDATE_IP) === false) {
+        return '';
+    }
+    return $unwrapped;
+}
+
+/**
+ * Resolves the address of the client that sent the request.
+ *
+ * X-Forwarded-For is a hop list that a proxy appends to, so only the entries
+ * added by trusted proxies can be relied on. The list is walked from the right,
+ * which is the hop the nearest trusted proxy saw, and the first address that is
+ * not a trusted proxy is the client. Reading it from the left instead returns
+ * whatever a caller put in the header, which lets a caller pick the address the
+ * brute-force lockout, the audit log and the trusted-device list are keyed on.
+ *
+ * @return string Returns the client address, "unknown" when the request carries none
+ */
 function gojs_get_client_ip() {
     global $config;
 
-    $remote_addr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
-    if (!$remote_addr) {
+    $remote_addr = isset($_SERVER['REMOTE_ADDR']) ? (string)$_SERVER['REMOTE_ADDR'] : '';
+    if ($remote_addr === '') {
         return 'unknown';
     }
 
-    if (empty($config['trustedProxies']) || !is_array($config['trustedProxies'])) {
-        return $remote_addr;
-    }
+    $trusted = (isset($config['trustedProxies']) && is_array($config['trustedProxies']))
+        ? $config['trustedProxies']
+        : array();
 
-    if (!in_array($remote_addr, $config['trustedProxies'], true)) {
+    // A direct caller is not allowed to speak for itself through the header.
+    if (empty($trusted) || !in_array($remote_addr, $trusted, true)) {
         return $remote_addr;
     }
 
@@ -70,17 +116,21 @@ function gojs_get_client_ip() {
         return $remote_addr;
     }
 
-    $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-    $ips = array_map('trim', $ips);
-    $ips = array_filter($ips);
+    $entries = explode(',', (string)$_SERVER['HTTP_X_FORWARDED_FOR']);
+    $client = '';
 
-    foreach ($ips as $ip) {
-        if (!in_array($ip, $config['trustedProxies'], true)) {
-            return $ip;
+    for ($i = count($entries) - 1; $i >= 0; $i--) {
+        $hop = gojs_forwarded_ip($entries[$i]);
+        if ($hop === '') {
+            continue;
+        }
+        $client = $hop;
+        if (!in_array($client, $trusted, true)) {
+            break;
         }
     }
 
-    return $remote_addr;
+    return $client !== '' ? $client : $remote_addr;
 }
 
 function gojs_check_brute_force() {

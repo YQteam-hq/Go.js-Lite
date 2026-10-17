@@ -43,6 +43,33 @@ function gojs_cron_expand_field($field, $min, $max) {
     return array_values(array_unique($allowed));
 }
 
+/**
+ * Decides whether a calendar day satisfies the day fields of an expression.
+ *
+ * The day of month and the day of week are combined with OR when both fields
+ * are restricted and with AND otherwise, which is the rule the cron daemon
+ * applies. An unrestricted field expands to every value, so the AND branch
+ * keeps the plain "every day" behaviour for a single restricted field.
+ *
+ * @param int $dom Day of month of the candidate timestamp
+ * @param int $dow Day of week of the candidate timestamp, 0 is Sunday
+ * @param array $doms_set Expanded day-of-month field, values as keys
+ * @param array $dows_set Expanded day-of-week field, values as keys
+ * @param bool $dom_restricted Whether the day-of-month field is restricted
+ * @param bool $dow_restricted Whether the day-of-week field is restricted
+ * @return bool Returns true when the day matches the expression
+ */
+function gojs_cron_day_matches($dom, $dow, $doms_set, $dows_set, $dom_restricted, $dow_restricted) {
+    $dom_matches = isset($doms_set[$dom]);
+    $dow_matches = isset($dows_set[$dow]);
+
+    if ($dom_restricted && $dow_restricted) {
+        return $dom_matches || $dow_matches;
+    }
+
+    return $dom_matches && $dow_matches;
+}
+
 function gojs_cron_next_run($expr, $from_ts) {
     if (!is_string($expr) || trim($expr) === '') {
         return $from_ts + 86400;
@@ -52,6 +79,13 @@ function gojs_cron_next_run($expr, $from_ts) {
     if (count($fields) !== 5) {
         return $from_ts + 86400;
     }
+
+    // A day field is restricted unless it is a plain star. When both the day
+    // of month and the day of week are restricted, cron matches a day that
+    // satisfies either of them, so "0 0 1 * 1" runs on the first of the month
+    // and on every Monday instead of only when both conditions line up.
+    $dom_restricted = trim($fields[2]) !== '*';
+    $dow_restricted = trim($fields[4]) !== '*';
 
     $minutes = gojs_cron_expand_field($fields[0], 0, 59);
     $hours = gojs_cron_expand_field($fields[1], 0, 23);
@@ -84,8 +118,7 @@ function gojs_cron_next_run($expr, $from_ts) {
 
         if (
             isset($months_set[$mon]) &&
-            isset($doms_set[$dom]) &&
-            isset($dows_set[$dow]) &&
+            gojs_cron_day_matches($dom, $dow, $doms_set, $dows_set, $dom_restricted, $dow_restricted) &&
             isset($hours_set[$hour]) &&
             isset($minutes_set[$min])
         ) {

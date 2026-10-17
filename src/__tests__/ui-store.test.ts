@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { EMPTY_MULTI_SELECTION, useUiStore } from '@/stores/uiStore';
+import { EMPTY_MULTI_SELECTION, MAX_VISIBLE_TOASTS, useUiStore } from '@/stores/uiStore';
 import { UI_STORAGE_KEY } from '@/lib/storage';
 
 beforeEach(() => {
@@ -96,12 +96,22 @@ describe('toasts', () => {
     expect(useUiStore.getState().toasts).toHaveLength(1);
   });
 
-  it('removes itself after the duration', () => {
+  it('keeps a toast until it is dismissed', () => {
     vi.useFakeTimers();
-    useUiStore.getState().addToast({ type: 'info', title: 'hello', duration: 100 });
-    expect(useUiStore.getState().toasts).toHaveLength(1);
+    const id = useUiStore.getState().addToast({ type: 'info', title: 'hello', duration: 100 });
     vi.advanceTimersByTime(150);
+    // The toast owns its lifetime now, the store only holds the stack.
+    expect(useUiStore.getState().toasts).toHaveLength(1);
+    useUiStore.getState().removeToast(id);
     expect(useUiStore.getState().toasts).toHaveLength(0);
     vi.useRealTimers();
+  });
+
+  it('caps the stack and drops the oldest entries', () => {
+    for (let index = 0; index < MAX_VISIBLE_TOASTS + 2; index += 1) {
+      useUiStore.getState().addToast({ type: 'info', title: `hello ${index}`, duration: 0 });
+    }
+    expect(useUiStore.getState().toasts).toHaveLength(MAX_VISIBLE_TOASTS);
+    expect(useUiStore.getState().toasts[0].title).toBe('hello 2');
   });
 });

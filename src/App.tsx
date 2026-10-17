@@ -5,6 +5,7 @@ import { useI18n } from '@/hooks/useI18n'
 import { Spinner } from '@/components/ui/Spinner'
 import AppLayout from '@/components/layout/AppLayout'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import { ScrollToTop } from '@/components/ScrollToTop'
 import NotFound from '@/routes/NotFound'
 import { useCapabilities } from '@/hooks/useCapabilities'
 import { applyDocumentLanguage } from '@/lib/locale'
@@ -217,6 +218,7 @@ export default function App() {
 
   return (
     <ErrorBoundary fallback={<RouteFallback />}>
+      <ScrollToTop />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/login" element={<Login />} />

@@ -1,13 +1,20 @@
-import { forwardRef, type InputHTMLAttributes, type TextareaHTMLAttributes } from 'react'
+import { forwardRef, type InputHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  invalid?: boolean
-  icon?: React.ReactNode
+  invalid?: boolean;
+  icon?: React.ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { invalid, icon, className = '', ...props },
-  ref,
+  {
+    invalid,
+    icon,
+    className = '',
+    'aria-describedby': describedBy,
+    'aria-invalid': explicitInvalid,
+    ...props
+  },
+  ref
 ) {
   return (
     <div className="relative">
@@ -19,19 +26,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       <input
         ref={ref}
         className={`input-base ${icon ? 'pl-10' : ''} ${invalid ? 'input-invalid' : ''} ${className}`}
+        aria-invalid={explicitInvalid ?? (invalid || undefined)}
+        aria-describedby={describedBy}
         {...props}
       />
     </div>
-  )
-})
+  );
+});
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  invalid?: boolean
+  invalid?: boolean;
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { invalid, className = '', ...props },
-  ref,
+  {
+    invalid,
+    className = '',
+    'aria-describedby': describedBy,
+    'aria-invalid': explicitInvalid,
+    ...props
+  },
+  ref
 ) {
   return (
     <textarea
@@ -39,7 +54,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
       className={`input-base min-h-[120px] py-2 font-mono text-sm leading-relaxed resize-y ${
         invalid ? 'input-invalid' : ''
       } ${className}`}
+      aria-invalid={explicitInvalid ?? (invalid || undefined)}
+      aria-describedby={describedBy}
       {...props}
     />
-  )
-})
+  );
+});

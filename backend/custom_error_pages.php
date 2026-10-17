@@ -10,15 +10,32 @@ function gojs_custom_error_pages_load_config(): array {
     return gojs_read_json_lock_safe(gojs_custom_error_pages_config_path(), array());
 }
 
+/**
+ * Persists the error page configuration.
+ *
+ * The calling handler owns the response, so the helper reports the outcome
+ * instead of writing one. Responding here ended the request before the
+ * handler could return the stored template, so a save answered with a
+ * generic success body instead of the resource the client asked for.
+ *
+ * @param array $config Configuration to store
+ * @return array Returns success, plus the write error when the store rejected the change
+ */
 function gojs_custom_error_pages_save_config(array $config): array {
-    $result = gojs_write_json_lock_safe(gojs_custom_error_pages_config_path(), $config, true);
-    if (!$result['success']) {
-        gojs_json_response(array('success' => false, 'error' => $result['error']));
-    }
-    gojs_json_response(array('success' => true));
+    return gojs_write_json_lock_safe(gojs_custom_error_pages_config_path(), $config, true);
 }
 
-function gojs_custom_error_pages_get_default_template(string $error_code): string {
+/**
+ * Returns the built-in template of an error code.
+ *
+ * The template carries a title and the document body, so the return type is
+ * the same array the caller stores. Declaring it as a string made every call
+ * a TypeError, which is what the reset endpoint used to answer with.
+ *
+ * @param string $error_code Error code to look up, one of 403, 404 or 500
+ * @return array|null Returns the template, or null when the code has none
+ */
+function gojs_custom_error_pages_get_default_template(string $error_code): ?array {
     $templates = array(
         '403' => array(
             'title' => '403 Forbidden',
@@ -186,8 +203,16 @@ function gojs_api_custom_error_pages_update_template() {
         'content' => $content,
         'updated_at' => time(),
     );
-    
-    gojs_custom_error_pages_save_config($config);
+
+    $saved = gojs_custom_error_pages_save_config($config);
+    if (empty($saved['success'])) {
+        gojs_json_response(null, array(
+            'code' => 'write_failed',
+            'message' => isset($saved['error']) ? $saved['error'] : 'Cannot save the error page template',
+        ), 500);
+        return;
+    }
+
     gojs_json_response(array(
         'error_code' => $error_code,
         'title' => $title,
@@ -226,8 +251,16 @@ function gojs_api_custom_error_pages_reset_template() {
         'content' => $default_template['content'],
         'updated_at' => time(),
     );
-    
-    gojs_custom_error_pages_save_config($config);
+
+    $saved = gojs_custom_error_pages_save_config($config);
+    if (empty($saved['success'])) {
+        gojs_json_response(null, array(
+            'code' => 'write_failed',
+            'message' => isset($saved['error']) ? $saved['error'] : 'Cannot save the error page template',
+        ), 500);
+        return;
+    }
+
     gojs_json_response(array(
         'error_code' => $error_code,
         'title' => $default_template['title'],
