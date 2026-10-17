@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from 'react'
+import { memo, type HTMLAttributes } from 'react'
 
 interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'text' | 'circular' | 'rectangular'
@@ -6,7 +6,7 @@ interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
   height?: string | number
 }
 
-export function Skeleton({
+export const Skeleton = memo(function Skeleton({
   variant = 'text',
   width,
   height,
@@ -36,33 +36,19 @@ export function Skeleton({
       {...props}
     />
   )
-}
+})
 
-export function SkeletonText({
-  lines = 3,
-  className = '',
-}: {
-  lines?: number
-  className?: string
-}) {
+export const SkeletonText = memo(function SkeletonText({ lines = 3, className = '' }: { lines?: number; className?: string }) {
   return (
     <div className={`space-y-2 ${className}`}>
       {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton
-          key={i}
-          variant="text"
-          className={i === lines - 1 && lines > 1 ? 'w-3/4' : ''}
-        />
+        <Skeleton key={i} variant="text" className={i === lines - 1 && lines > 1 ? 'w-3/4' : ''} />
       ))}
     </div>
   )
-}
+})
 
-export function SkeletonCard({
-  className = '',
-}: {
-  className?: string
-}) {
+export const SkeletonCard = memo(function SkeletonCard({ className = '' }: { className?: string }) {
   return (
     <div className={`card p-5 space-y-4 ${className}`}>
       <div className="flex items-center gap-3">
@@ -79,15 +65,9 @@ export function SkeletonCard({
       </div>
     </div>
   )
-}
+})
 
-export function SkeletonList({
-  count = 5,
-  className = '',
-}: {
-  count?: number
-  className?: string
-}) {
+export const SkeletonList = memo(function SkeletonList({ count = 5, className = '' }: { count?: number; className?: string }) {
   return (
     <div className={`divide-y divide-border ${className}`}>
       {Array.from({ length: count }).map((_, i) => (
@@ -102,13 +82,9 @@ export function SkeletonList({
       ))}
     </div>
   )
-}
+})
 
-export function SkeletonDashboard({
-  className = '',
-}: {
-  className?: string
-}) {
+export const SkeletonDashboard = memo(function SkeletonDashboard({ className = '' }: { className?: string }) {
   return (
     <div className={`space-y-5 ${className}`}>
       <div className="space-y-2">
@@ -135,9 +111,9 @@ export function SkeletonDashboard({
       </div>
     </div>
   )
-}
+})
 
-export function SkeletonTable({
+export const SkeletonTable = memo(function SkeletonTable({
   rows = 6,
   columns = 4,
   className = '',
@@ -161,4 +137,4 @@ export function SkeletonTable({
       <SkeletonList count={rows} />
     </div>
   )
-}
+})

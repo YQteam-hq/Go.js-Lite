@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useI18n } from '@/hooks/useI18n'
 
 interface SpinnerProps {
@@ -5,7 +6,7 @@ interface SpinnerProps {
   className?: string
 }
 
-export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
+export const Spinner = memo(function Spinner({ size = 'md', className = '' }: SpinnerProps) {
   const { t } = useI18n()
   const sizes = {
     sm: 'w-4 h-4 border-2',
@@ -25,4 +26,4 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
       aria-label={t('common.loading')}
     />
   )
-}
+})
