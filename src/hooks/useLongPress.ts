@@ -19,8 +19,10 @@ export function useLongPress<T extends HTMLElement>(
   // Every cancellation funnels through here — the unmount cleanup, the
   // pointer-up path, the move threshold and a new gesture replacing a
   // pending one — so the timer has a single owner instead of open-coded
-  // clearTimeout calls scattered across the handlers. Returns whether a
-  // pending timer was actually cancelled.
+  // clearTimeout calls scattered across the handlers. The boolean reports
+  // whether a pending timer was actually cancelled, which is what lets the
+  // shared end path tell a finished gesture, where there is nothing left to
+  // cancel, from a live one.
   const cancelPending = useCallback((): boolean => {
     if (timerRef.current === null) return false
     window.clearTimeout(timerRef.current)
@@ -34,9 +36,11 @@ export function useLongPress<T extends HTMLElement>(
     cancelPending()
   }, [cancelPending])
 
-  // Both the timer path and the pointer-up path land here. The guard keeps the
-  // second call of a finished gesture a no-op, so onEnd fires exactly once.
-  const clear = useCallback(() => {
+  // Both the timer path and the pointer-up path land here, which is why the
+  // name speaks of ending the gesture rather than of one handler's job. The
+  // guard keeps the second call of a finished gesture a no-op, so onEnd
+  // fires exactly once.
+  const endGesture = useCallback(() => {
     if (!cancelPending()) return
     setActive(false)
     onEnd?.()
@@ -52,10 +56,10 @@ export function useLongPress<T extends HTMLElement>(
       // The single place a timer is armed.
       timerRef.current = window.setTimeout(() => {
         callback()
-        clear()
+        endGesture()
       }, delay)
     },
-    [callback, delay, onStart, cancelPending, clear],
+    [callback, delay, onStart, cancelPending, endGesture],
   )
 
   const move = useCallback(
@@ -64,10 +68,10 @@ export function useLongPress<T extends HTMLElement>(
       const dy = Math.abs(clientY - startPosRef.current.y)
       if (dx > 10 || dy > 10) {
         movedRef.current = true
-        clear()
+        endGesture()
       }
     },
-    [clear],
+    [endGesture],
   )
 
   const handlers = {
@@ -79,8 +83,8 @@ export function useLongPress<T extends HTMLElement>(
       const t = e.touches[0]
       move(t.clientX, t.clientY)
     },
-    onTouchEnd: clear,
-    onTouchCancel: clear,
+    onTouchEnd: endGesture,
+    onTouchCancel: endGesture,
     onMouseDown: (e: React.MouseEvent<T>) => {
       if (e.button !== 0) return
       start(e.clientX, e.clientY)
@@ -88,8 +92,8 @@ export function useLongPress<T extends HTMLElement>(
     onMouseMove: (e: React.MouseEvent<T>) => {
       move(e.clientX, e.clientY)
     },
-    onMouseUp: clear,
-    onMouseLeave: clear,
+    onMouseUp: endGesture,
+    onMouseLeave: endGesture,
     onContextMenu: (e: React.MouseEvent<T>) => {
       e.preventDefault()
       callback()
