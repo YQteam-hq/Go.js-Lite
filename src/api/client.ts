@@ -33,7 +33,9 @@ function readErrorFields(error: unknown): { code?: string; message?: string } {
   }
 }
 
-function toFiniteNumber(value: unknown): number | undefined {
+// Reads a finite number out of a body field, accepting numbers and numeric
+// strings; anything else yields undefined.
+function extractFiniteNumber(value: unknown): number | undefined {
   if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
   if (typeof value === 'string' && value.trim() !== '') {
     const parsed = Number(value)
@@ -46,7 +48,18 @@ function readRetryAfter(value: unknown): number | undefined {
   const record = readRecord(value)
   if (!record) return undefined
   const retry = record.retryAfter ?? record.retry_after
-  return toFiniteNumber(retry)
+  return extractFiniteNumber(retry)
+}
+
+function parseRetryAfterSeconds(value: string): number | undefined {
+  if (!/^\d+$/.test(value)) return undefined
+  return extractFiniteNumber(value)
+}
+
+function parseRetryAfterHttpDate(value: string): number | undefined {
+  const date = Date.parse(value)
+  if (Number.isNaN(date)) return undefined
+  return Math.max(0, Math.ceil((date - Date.now()) / 1000))
 }
 
 // The HTTP Retry-After header carries either a number of seconds or an
@@ -56,10 +69,7 @@ function parseRetryAfterHeader(value: string | null): number | undefined {
   if (!value) return undefined
   const trimmed = value.trim()
   if (trimmed === '') return undefined
-  if (/^\d+$/.test(trimmed)) return toFiniteNumber(trimmed)
-  const date = Date.parse(trimmed)
-  if (Number.isNaN(date)) return undefined
-  return Math.max(0, Math.ceil((date - Date.now()) / 1000))
+  return parseRetryAfterSeconds(trimmed) ?? parseRetryAfterHttpDate(trimmed)
 }
 
 export async function apiFetch<T = unknown>(
