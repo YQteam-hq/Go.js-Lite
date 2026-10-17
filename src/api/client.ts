@@ -51,17 +51,6 @@ function readRetryAfter(value: unknown): number | undefined {
   return extractFiniteNumber(retry)
 }
 
-function parseRetryAfterSeconds(value: string): number | undefined {
-  if (!/^\d+$/.test(value)) return undefined
-  return extractFiniteNumber(value)
-}
-
-function parseRetryAfterHttpDate(value: string): number | undefined {
-  const date = Date.parse(value)
-  if (Number.isNaN(date)) return undefined
-  return Math.max(0, Math.ceil((date - Date.now()) / 1000))
-}
-
 // The HTTP Retry-After header carries either a number of seconds or an
 // HTTP-date. Servers send it on 429 and 503 responses, and it is the only
 // retry hint when the body is empty or not JSON.
@@ -69,7 +58,15 @@ function parseRetryAfterHeader(value: string | null): number | undefined {
   if (!value) return undefined
   const trimmed = value.trim()
   if (trimmed === '') return undefined
-  return parseRetryAfterSeconds(trimmed) ?? parseRetryAfterHttpDate(trimmed)
+
+  if (/^\d+$/.test(trimmed)) {
+    return extractFiniteNumber(trimmed)
+  }
+
+  const date = Date.parse(trimmed)
+  if (Number.isNaN(date)) return undefined
+  // A date in the past means the caller may retry right away.
+  return Math.max(0, Math.ceil((date - Date.now()) / 1000))
 }
 
 export async function apiFetch<T = unknown>(

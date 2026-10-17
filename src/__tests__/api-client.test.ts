@@ -47,6 +47,12 @@ function stubFetch(response: Response) {
   return mock;
 }
 
+// Builds the JSON body of a 429 response; extra fields override the defaults,
+// which is how the retry hint variations are expressed.
+function rateLimitedBody(fields: Record<string, unknown> = {}): string {
+  return JSON.stringify({ error: { code: 'rate_limited', message: 'slow down', ...fields } });
+}
+
 async function captureError(promise: Promise<unknown>): Promise<ApiError> {
   try {
     await promise;
@@ -294,23 +300,11 @@ describe('apiFetch error normalization', () => {
   });
 
   it('normalizes retryAfter from camel case and snake case', async () => {
-    stubFetch(
-      makeResponse({
-        status: 429,
-        body: JSON.stringify({
-          error: { code: 'rate_limited', message: 'slow down', retryAfter: 12 },
-        }),
-      })
-    );
+    stubFetch(makeResponse({ status: 429, body: rateLimitedBody({ retryAfter: 12 }) }));
     const camel = await captureError(apiFetch('x'));
     expect(camel.retryAfter).toBe(12);
 
-    stubFetch(
-      makeResponse({
-        status: 429,
-        body: JSON.stringify({ error: { message: 'slow down', retry_after: 30 } }),
-      })
-    );
+    stubFetch(makeResponse({ status: 429, body: rateLimitedBody({ retry_after: 30 }) }));
     const snake = await captureError(apiFetch('x'));
     expect(snake.retryAfter).toBe(30);
   });
@@ -319,7 +313,7 @@ describe('apiFetch error normalization', () => {
     stubFetch(
       makeResponse({
         status: 429,
-        body: JSON.stringify({ error: { code: 'rate_limited', message: 'slow down' } }),
+        body: rateLimitedBody(),
         headers: { 'Retry-After': '37' },
       })
     );
@@ -345,9 +339,7 @@ describe('apiFetch error normalization', () => {
     stubFetch(
       makeResponse({
         status: 429,
-        body: JSON.stringify({
-          error: { code: 'rate_limited', message: 'slow down', retryAfter: 12 },
-        }),
+        body: rateLimitedBody({ retryAfter: 12 }),
         headers: { 'Retry-After': '99' },
       })
     );
@@ -359,9 +351,7 @@ describe('apiFetch error normalization', () => {
     stubFetch(
       makeResponse({
         status: 429,
-        body: JSON.stringify({
-          error: { code: 'rate_limited', message: 'slow down', retry_after: '30' },
-        }),
+        body: rateLimitedBody({ retry_after: '30' }),
       })
     );
     const error = await captureError(apiFetch('x'));
@@ -372,7 +362,7 @@ describe('apiFetch error normalization', () => {
     stubFetch(
       makeResponse({
         status: 429,
-        body: JSON.stringify({ error: { code: 'rate_limited', message: 'slow down' } }),
+        body: rateLimitedBody(),
         headers: { 'Retry-After': 'soon' },
       })
     );
