@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react'
-import { useUiStore } from '@/stores/uiStore'
+import { DEFAULT_TOAST_DURATION, useUiStore } from '@/stores/uiStore'
 import { useI18n } from '@/hooks/useI18n'
 
 const icons = {
@@ -54,6 +54,7 @@ function ToastItem({
   const Icon = icons[toast.type]
   const [show, setShow] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const [paused, setPaused] = useState(false)
   const { t } = useI18n()
 
   useEffect(() => {
@@ -61,10 +62,20 @@ function ToastItem({
     return () => cancelAnimationFrame(timer)
   }, [])
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setLeaving(true)
     setTimeout(onClose, 300)
-  }
+  }, [onClose])
+
+  const duration = toast.duration ?? DEFAULT_TOAST_DURATION
+
+  useEffect(() => {
+    // The toast owns its lifetime so the countdown stops while the pointer or
+    // the focus rests on it, which keeps long messages readable.
+    if (duration <= 0 || paused || leaving) return
+    const timer = window.setTimeout(handleClose, duration)
+    return () => window.clearTimeout(timer)
+  }, [duration, paused, leaving, handleClose])
 
   return (
     <div
@@ -79,7 +90,11 @@ function ToastItem({
         ${show && !leaving ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95'}
       `}
       style={{ animationDelay: `${index * 50}ms` }}
-      role="status"
+      role={toast.type === 'error' ? 'alert' : 'status'}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
     >
       <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
         toast.type === 'success' ? 'bg-success/10' :
