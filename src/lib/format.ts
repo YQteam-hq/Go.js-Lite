@@ -3,14 +3,15 @@ import { selectLanguage, useUiStore } from '@/stores/uiStore'
 import { useI18n } from '@/hooks/useI18n'
 
 export function formatBytes(bytes: number, decimals = 1): string {
+  if (!Number.isFinite(bytes)) return '—'
   if (bytes === 0) return '0 B'
   if (bytes < 0) return '—'
 
   const k = 1024
   const dm = decimals < 0 ? 0 : decimals
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']
 
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  const i = Math.min(Math.max(Math.floor(Math.log(bytes) / Math.log(k)), 0), sizes.length - 1)
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
