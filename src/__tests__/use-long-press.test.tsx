@@ -136,4 +136,33 @@ describe('useLongPress', () => {
     });
     expect(callback).not.toHaveBeenCalled();
   });
+
+  it('restarts the timer when a new press begins before the delay', () => {
+    const callback = vi.fn();
+    const onEnd = vi.fn();
+    const { result } = renderHook(() => useLongPress(callback, { delay: 500, onEnd }));
+
+    act(() => {
+      result.current.handlers.onMouseDown(mouseDown());
+    });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    // A second press without releasing the first replaces the pending timer,
+    // so the original deadline passes without firing anything.
+    act(() => {
+      result.current.handlers.onMouseDown(mouseDown());
+    });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(callback).not.toHaveBeenCalled();
+    expect(onEnd).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
 });
