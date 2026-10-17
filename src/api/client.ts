@@ -34,7 +34,9 @@ function readErrorFields(error: unknown): { code?: string; message?: string } {
 }
 
 // Reads a finite number out of a body field, accepting numbers and numeric
-// strings; anything else yields undefined.
+// strings; anything else yields undefined. Values that parse to a non-finite
+// number ('NaN', 'Infinity', and the NaN/Infinity numbers themselves) are
+// rejected too, so a hint is either a real number or nothing.
 function extractFiniteNumber(value: unknown): number | undefined {
   if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
   if (typeof value === 'string' && value.trim() !== '') {
@@ -59,13 +61,15 @@ function parseRetryAfterHeader(value: string | null): number | undefined {
   const trimmed = value.trim()
   if (trimmed === '') return undefined
 
+  // Delay-seconds form: a plain non-negative integer, the common case.
   if (/^\d+$/.test(trimmed)) {
     return extractFiniteNumber(trimmed)
   }
 
+  // HTTP-date form: an absolute timestamp. A date in the past means the
+  // caller may retry right away, hence the clamp to 0.
   const date = Date.parse(trimmed)
   if (Number.isNaN(date)) return undefined
-  // A date in the past means the caller may retry right away.
   return Math.max(0, Math.ceil((date - Date.now()) / 1000))
 }
 

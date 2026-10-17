@@ -47,8 +47,9 @@ function stubFetch(response: Response) {
   return mock;
 }
 
-// Builds the JSON body of a 429 response; extra fields override the defaults,
-// which is how the retry hint variations are expressed.
+// Builds the JSON body of a 429 response; extra fields override the
+// defaults, which is how each case spells out the retry hint it varies.
+// Call it with no argument for the plain rate-limit body.
 function rateLimitedBody(fields: Record<string, unknown> = {}): string {
   return JSON.stringify({ error: { code: 'rate_limited', message: 'slow down', ...fields } });
 }
