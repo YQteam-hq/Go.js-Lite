@@ -15,6 +15,7 @@ const common = {
     submit: '提交',
     copy: '复制',
     copied: '已复制',
+    copyFailed: '复制失败',
     logout: '退出登录',
     menu: '菜单',
     user: '用户',

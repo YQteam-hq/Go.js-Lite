@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useUiStore } from '@/stores/uiStore'
 import { authApi } from '@/api/auth'
 import { toast } from '@/components/ui/Toast'
+import { copyText } from '@/lib/clipboard'
 import type { ThemeMode, Language, TotpEnrollResponse } from '@shared/types'
 import { useI18n } from '@/hooks/useI18n'
 import { NotificationChannelsCard } from '@/components/notifications/NotificationChannelsCard'
@@ -549,11 +550,15 @@ export default function Settings() {
                 size="sm"
                 variant="ghost"
                 onClick={() => {
-                  if (settings?.accessToken) {
-                    const url = `${window.location.origin}${window.location.pathname}?token=${settings.accessToken}`
-                    navigator.clipboard.writeText(url)
-                    toast({ type: 'success', title: t('settings.linkCopied') })
-                  }
+                  if (!settings?.accessToken) return
+                  const url = `${window.location.origin}${window.location.pathname}?token=${settings.accessToken}`
+                  void copyText(url).then((copied) => {
+                    toast(
+                      copied
+                        ? { type: 'success', title: t('settings.linkCopied') }
+                        : { type: 'error', title: t('common.copyFailed') },
+                    )
+                  })
                 }}
               >
                 <Copy size={16} />
@@ -747,8 +752,13 @@ export default function Settings() {
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      navigator.clipboard.writeText(enrollData.secret)
-                      toast({ type: 'success', title: t('totp.secretCopied') })
+                      void copyText(enrollData.secret).then((copied) => {
+                        toast(
+                          copied
+                            ? { type: 'success', title: t('totp.secretCopied') }
+                            : { type: 'error', title: t('common.copyFailed') },
+                        )
+                      })
                     }}
                   >
                     <Copy size={16} />
@@ -764,8 +774,13 @@ export default function Settings() {
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      navigator.clipboard.writeText(enrollData.otpauth_url)
-                      toast({ type: 'success', title: t('totp.otpauthCopied') })
+                      void copyText(enrollData.otpauth_url).then((copied) => {
+                        toast(
+                          copied
+                            ? { type: 'success', title: t('totp.otpauthCopied') }
+                            : { type: 'error', title: t('common.copyFailed') },
+                        )
+                      })
                     }}
                   >
                     <Copy size={16} />

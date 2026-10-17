@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonTable } from '@/components/ui/Skeleton'
 import { toast } from '@/components/ui/Toast'
 import { tokensApi, type ApiTokenV2 } from '@/api/tokens'
+import { copyText } from '@/lib/clipboard'
 import { useFormat } from '@/lib/format'
 import { useI18n } from '@/hooks/useI18n'
 import { resolveErrorText } from '@/lib/errorMessages'
@@ -96,13 +97,14 @@ export default function Tokens() {
 
   const copyToken = async () => {
     if (!issued?.token_plain_once) return
-    try {
-      await navigator.clipboard.writeText(issued.token_plain_once)
-      setCopied(true)
-      toast({ type: 'success', title: t('tokens.copied') })
-    } catch {
+    const copied = await copyText(issued.token_plain_once)
+    if (!copied) {
       setCopied(false)
+      toast({ type: 'error', title: t('common.copyFailed') })
+      return
     }
+    setCopied(true)
+    toast({ type: 'success', title: t('tokens.copied') })
   }
 
   return (
