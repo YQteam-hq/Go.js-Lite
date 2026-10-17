@@ -7,10 +7,10 @@ interface AlertProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<AlertVariant, string> = {
-  default: 'bg-blue-50 border-blue-200 text-blue-900',
-  destructive: 'bg-red-50 border-red-200 text-red-900',
-  warning: 'bg-yellow-50 border-yellow-200 text-yellow-900',
-  success: 'bg-green-50 border-green-200 text-green-900'
+  default: 'bg-info-soft border-info/30 text-fg',
+  destructive: 'bg-danger-soft border-danger/30 text-fg',
+  warning: 'bg-warning-soft border-warning/30 text-fg',
+  success: 'bg-success-soft border-success/30 text-fg'
 };
 
 export function Alert({ variant = 'default', className = '', children, ...props }: AlertProps) {

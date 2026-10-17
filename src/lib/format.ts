@@ -2,15 +2,28 @@ import { useMemo } from 'react'
 import { selectLanguage, useUiStore } from '@/stores/uiStore'
 import { useI18n } from '@/hooks/useI18n'
 
+// The placeholder the panel renders wherever a value is unavailable, so the
+// sizes that carry no meaningful number share one named constant.
+const UNAVAILABLE_SIZE = '—'
+
+/**
+ * Formats a byte count with a binary unit.
+ *
+ * Non-finite and negative inputs carry no meaningful size and render as an
+ * em dash, the placeholder the panel uses for unavailable values.
+ */
 export function formatBytes(bytes: number, decimals = 1): string {
+  if (!Number.isFinite(bytes)) return UNAVAILABLE_SIZE
   if (bytes === 0) return '0 B'
-  if (bytes < 0) return '—'
+  if (bytes < 0) return UNAVAILABLE_SIZE
 
   const k = 1024
   const dm = decimals < 0 ? 0 : decimals
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']
 
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  // Clamp the index so sub-byte values stay in the byte unit and values past
+  // the last unit keep it instead of indexing outside the array.
+  const i = Math.min(Math.max(Math.floor(Math.log(bytes) / Math.log(k)), 0), sizes.length - 1)
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
