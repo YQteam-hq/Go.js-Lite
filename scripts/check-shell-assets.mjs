@@ -8,36 +8,63 @@ import { dirname, join } from 'node:path'
 // deployment; this guard turns it into a build failure instead.
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
+
+const SW_FILE = 'public/sw.js'
+const SHELL_ASSETS_PREFIX = 'const SHELL_ASSETS'
+// A single-line string constant in the worker: const NAME = 'value'.
+const CONSTANT_PATTERN = /const (\w+) = '([^']+)'/g
+// One quoted entry inside the shell list.
+const ENTRY_PATTERN = /'([^']*)'/g
+
 const failures = []
 
-let swSource = ''
-try {
-  swSource = readFileSync(join(root, 'public/sw.js'), 'utf8')
-} catch {
-  failures.push('public/sw.js: the service worker source is missing')
+function readTextFile(relativePath) {
+  try {
+    return readFileSync(join(root, relativePath), 'utf8')
+  } catch {
+    failures.push(`${relativePath}: the file is missing`)
+    return ''
+  }
 }
 
-const readConstant = (name) => {
-  const match = swSource.match(new RegExp(`const ${name} = '([^']+)'`))
-  return match ? match[1] : null
+// Maps every string constant declared in the worker to its literal, so the
+// shell list can be read with the identifiers it references resolved.
+function readConstants(source) {
+  const constants = new Map()
+  for (const match of source.matchAll(CONSTANT_PATTERN)) {
+    constants.set(match[1], match[2])
+  }
+  return constants
 }
 
-const shellLine = swSource.split('\n').find((line) => line.startsWith('const SHELL_ASSETS'))
-if (swSource && !shellLine) {
-  failures.push('public/sw.js: the SHELL_ASSETS list is missing')
+// Returns the shell list with every identifier replaced by its literal, or
+// an empty string when the worker declares no list at all.
+function readShellList(source, constants) {
+  const line = source.split('\n').find((entry) => entry.startsWith(SHELL_ASSETS_PREFIX))
+  if (!line) {
+    failures.push(`${SW_FILE}: the SHELL_ASSETS list is missing`)
+    return ''
+  }
+  const offlineUrl = constants.get('OFFLINE_URL')
+  return offlineUrl ? line.replaceAll('OFFLINE_URL', `'${offlineUrl}'`) : line
 }
 
-const offlineUrl = readConstant('OFFLINE_URL')
-if (offlineUrl && shellLine && !shellLine.includes(offlineUrl) && !shellLine.includes('OFFLINE_URL')) {
-  failures.push(`public/sw.js: OFFLINE_URL "${offlineUrl}" is not part of SHELL_ASSETS`)
+const swSource = readTextFile(SW_FILE)
+const constants = readConstants(swSource)
+const offlineUrl = constants.get('OFFLINE_URL')
+
+if (swSource && !offlineUrl) {
+  failures.push(`${SW_FILE}: the OFFLINE_URL constant is missing`)
 }
 
-// The shell list references OFFLINE_URL by name, so resolve the identifier
-// to its literal before reading the quoted entries.
-const resolvedLine = offlineUrl ? shellLine.replaceAll('OFFLINE_URL', `'${offlineUrl}'`) : shellLine
-const entries = resolvedLine ? [...resolvedLine.matchAll(/'([^']*)'/g)].map((m) => m[1]) : []
-if (entries.length === 0) {
-  failures.push('public/sw.js: SHELL_ASSETS is empty')
+const shellList = readShellList(swSource, constants)
+if (offlineUrl && shellList && !shellList.includes(`'${offlineUrl}'`)) {
+  failures.push(`${SW_FILE}: OFFLINE_URL "${offlineUrl}" is not part of SHELL_ASSETS`)
+}
+
+const entries = shellList ? [...shellList.matchAll(ENTRY_PATTERN)].map((match) => match[1]) : []
+if (swSource && entries.length === 0) {
+  failures.push(`${SW_FILE}: SHELL_ASSETS is empty`)
 }
 
 for (const entry of entries) {
@@ -46,7 +73,7 @@ for (const entry of entries) {
   // other entry is copied from public/.
   const file = path === '' || path === 'index.html' ? 'index.html' : join('public', path)
   if (!existsSync(join(root, file))) {
-    failures.push(`public/sw.js: SHELL_ASSETS entry "${entry}" has no file at ${file}`)
+    failures.push(`${SW_FILE}: SHELL_ASSETS entry "${entry}" has no file at ${file}`)
   }
 }
 
