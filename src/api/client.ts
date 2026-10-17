@@ -33,11 +33,33 @@ function readErrorFields(error: unknown): { code?: string; message?: string } {
   }
 }
 
+function toFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+  return undefined
+}
+
 function readRetryAfter(value: unknown): number | undefined {
   const record = readRecord(value)
   if (!record) return undefined
   const retry = record.retryAfter ?? record.retry_after
-  return typeof retry === 'number' && Number.isFinite(retry) ? retry : undefined
+  return toFiniteNumber(retry)
+}
+
+// The HTTP Retry-After header carries either a number of seconds or an
+// HTTP-date. Servers send it on 429 and 503 responses, and it is the only
+// retry hint when the body is empty or not JSON.
+function parseRetryAfterHeader(value: string | null): number | undefined {
+  if (!value) return undefined
+  const trimmed = value.trim()
+  if (trimmed === '') return undefined
+  if (/^\d+$/.test(trimmed)) return toFiniteNumber(trimmed)
+  const date = Date.parse(trimmed)
+  if (Number.isNaN(date)) return undefined
+  return Math.max(0, Math.ceil((date - Date.now()) / 1000))
 }
 
 export async function apiFetch<T = unknown>(
@@ -91,7 +113,13 @@ export async function apiFetch<T = unknown>(
     } catch {
       errBody = null
     }
-    throw buildApiError(res.status, errBody, res.statusText)
+    throw buildApiError(
+      res.status,
+      errBody,
+      res.statusText,
+      undefined,
+      parseRetryAfterHeader(res.headers.get('retry-after')),
+    )
   }
 
   const responseType = options.responseType || 'json'
@@ -124,6 +152,7 @@ export async function apiFetch<T = unknown>(
         envelope.error,
         fields.message || res.statusText || 'Request failed',
         fields.code,
+        parseRetryAfterHeader(res.headers.get('retry-after')),
       )
     }
     if (envelope.ok === true && 'data' in envelope) {
@@ -145,6 +174,7 @@ function buildApiError(
   errBody: unknown,
   fallbackMessage: string,
   fallbackCode?: string,
+  retryAfterHeader?: number,
 ): ApiError {
   const container = readRecord(errBody)
   const nestedError = container ? container.error : undefined
@@ -160,7 +190,8 @@ function buildApiError(
     (typeof raw === 'string' ? raw : undefined) ||
     fallbackMessage ||
     `HTTP ${status}`
-  const retryAfter = readRetryAfter(raw)
+  // The body wins when it carries a hint; the header is the fallback.
+  const retryAfter = readRetryAfter(raw) ?? retryAfterHeader
   return new ApiError(code, message, status, { ...(rawRecord ?? {}), retryAfter })
 }
 

@@ -15,18 +15,25 @@ interface MockResponseInit {
   contentType?: string;
   body?: string;
   blob?: unknown;
+  headers?: Record<string, string>;
 }
 
 function makeResponse(init: MockResponseInit = {}): Response {
   const status = init.status ?? 200;
   const body = init.body ?? '';
   const contentType = init.contentType ?? 'application/json';
+  const headers = init.headers ?? {};
   return {
     ok: status >= 200 && status < 300,
     status,
     statusText: init.statusText ?? 'OK',
     headers: {
-      get: (name: string) => (name.toLowerCase() === 'content-type' ? contentType : null),
+      get: (name: string) => {
+        const key = name.toLowerCase();
+        if (key === 'content-type') return contentType;
+        const match = Object.keys(headers).find((k) => k.toLowerCase() === key);
+        return match ? headers[match] : null;
+      },
     },
     text: () => Promise.resolve(body),
     json: () => Promise.resolve(JSON.parse(body)),
@@ -306,6 +313,84 @@ describe('apiFetch error normalization', () => {
     );
     const snake = await captureError(apiFetch('x'));
     expect(snake.retryAfter).toBe(30);
+  });
+
+  it('reads the Retry-After header in seconds', async () => {
+    stubFetch(
+      makeResponse({
+        status: 429,
+        body: JSON.stringify({ error: { code: 'rate_limited', message: 'slow down' } }),
+        headers: { 'Retry-After': '37' },
+      })
+    );
+    const error = await captureError(apiFetch('x'));
+    expect(error.retryAfter).toBe(37);
+  });
+
+  it('reads the Retry-After header as an HTTP-date', async () => {
+    const future = new Date(Date.now() + 90_000).toUTCString();
+    stubFetch(
+      makeResponse({
+        status: 503,
+        body: '',
+        headers: { 'retry-after': future },
+      })
+    );
+    const error = await captureError(apiFetch('x'));
+    expect(error.retryAfter).toBeGreaterThan(0);
+    expect(error.retryAfter).toBeLessThanOrEqual(90);
+  });
+
+  it('prefers the body hint over the Retry-After header', async () => {
+    stubFetch(
+      makeResponse({
+        status: 429,
+        body: JSON.stringify({
+          error: { code: 'rate_limited', message: 'slow down', retryAfter: 12 },
+        }),
+        headers: { 'Retry-After': '99' },
+      })
+    );
+    const error = await captureError(apiFetch('x'));
+    expect(error.retryAfter).toBe(12);
+  });
+
+  it('accepts a numeric string retryAfter in the body', async () => {
+    stubFetch(
+      makeResponse({
+        status: 429,
+        body: JSON.stringify({
+          error: { code: 'rate_limited', message: 'slow down', retry_after: '30' },
+        }),
+      })
+    );
+    const error = await captureError(apiFetch('x'));
+    expect(error.retryAfter).toBe(30);
+  });
+
+  it('ignores an unparsable Retry-After header', async () => {
+    stubFetch(
+      makeResponse({
+        status: 429,
+        body: JSON.stringify({ error: { code: 'rate_limited', message: 'slow down' } }),
+        headers: { 'Retry-After': 'soon' },
+      })
+    );
+    const error = await captureError(apiFetch('x'));
+    expect(error.retryAfter).toBeUndefined();
+  });
+
+  it('reads the Retry-After header on an ok false envelope', async () => {
+    stubFetch(
+      makeResponse({
+        status: 429,
+        body: JSON.stringify({ ok: false, error: { code: 'rate_limited', message: 'slow down' } }),
+        headers: { 'Retry-After': '45' },
+      })
+    );
+    const error = await captureError(apiFetch('x'));
+    expect(error.code).toBe('rate_limited');
+    expect(error.retryAfter).toBe(45);
   });
 
   it('throws an ApiError for an ok false envelope', async () => {
