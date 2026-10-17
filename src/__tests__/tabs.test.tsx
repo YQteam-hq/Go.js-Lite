@@ -140,6 +140,40 @@ describe('Tabs', () => {
     expect(document.activeElement).toBe(one);
   });
 
+  it('does nothing when every tab is disabled', () => {
+    render(
+      <Tabs value="one" onValueChange={() => {}}>
+        <TabsList>
+          <TabsTrigger value="one" disabled>
+            One
+          </TabsTrigger>
+          <TabsTrigger value="two" disabled>
+            Two
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>,
+    );
+    const list = screen.getByRole('tablist');
+    const [one] = tabs();
+    one.focus();
+
+    fireEvent.keyDown(list, { key: 'ArrowRight' });
+    fireEvent.keyDown(list, { key: 'End' });
+    // Focus stays where it was and nothing crashes.
+    expect(document.activeElement).toBe(one);
+  });
+
+  it('ignores keys that are not navigation keys', () => {
+    render(<TabsHarness />);
+    const [one] = tabs();
+    one.focus();
+
+    fireEvent.keyDown(one, { key: 'Enter' });
+    fireEvent.keyDown(one, { key: 'a' });
+    expect(document.activeElement).toBe(one);
+    expect(one.getAttribute('aria-selected')).toBe('true');
+  });
+
   it('paints with the semantic tokens instead of the raw palette', () => {
     render(<TabsHarness />);
     const list = screen.getByRole('tablist');
