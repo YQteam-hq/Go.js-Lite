@@ -222,4 +222,23 @@ describe('service worker shell', () => {
     expect(shellLine).toBeDefined();
     expect(shellLine).toContain('OFFLINE_URL');
   });
+
+  it('precaches only files that exist next to the worker', () => {
+    // cache.addAll rejects the whole install when a single entry 404s, so
+    // every shell asset has to resolve to a real file in public/.
+    const shellLine = swSource.split('\n').find((line) => line.startsWith('const SHELL_ASSETS'));
+    const offlineMatch = swSource.match(/const OFFLINE_URL = '([^']+)'/);
+    const entries = shellLine?.match(/'(?:[^']*)'/g) ?? [];
+    const assets = entries.map((entry) => entry.slice(1, -1));
+    // OFFLINE_URL is referenced by name inside the shell list.
+    if (offlineMatch) assets.push(offlineMatch[1]);
+    expect(assets.length).toBeGreaterThan(0);
+    for (const asset of assets) {
+      const path = asset.replace(/^\.\//, '');
+      // './' and './index.html' are the document at the project root; every
+      // other entry is copied from public/.
+      const file = path === '' || path === 'index.html' ? 'index.html' : resolve('public', path);
+      expect(existsSync(resolve(process.cwd(), file))).toBe(true);
+    }
+  });
 });
