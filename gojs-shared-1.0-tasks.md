@@ -2,7 +2,7 @@
 
 > **配套**：[gojs-lite-1.0-plan.md](computer:///workspace/gojs-lite-1.0-plan.md) · [gojs-1.0-assignments.md](computer:///workspace/gojs-1.0-assignments.md) · [gojs-panel-1.0-tasks.md](computer:///workspace/gojs-panel-1.0-tasks.md) · [gojs-apache-1.0-tasks.md](computer:///workspace/gojs-apache-1.0-tasks.md) · [gojs-ssh-1.0-tasks.md](computer:///workspace/gojs-ssh-1.0-tasks.md) · [gojs-docker-1.0-tasks.md](computer:///workspace/gojs-docker-1.0-tasks.md)
 > **适用范围**：Panel / Apache / SSH / Docker 四产品共享
-> **当前阶段**：✅ M0 文档冻结完成 · ✅ M0 补丁接近完成
+> **当前阶段**：✅ M0 文档冻结完成 · ✅ M0 补丁完成 · ✅ M1 前置完成
 
 ---
 
