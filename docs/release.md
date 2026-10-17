@@ -190,8 +190,6 @@ moves a removal date, and the schedule states the release in which each surface 
 
 - `docs/deprecations.md` - the removal schedule and how a caller checks whether it is affected.
 - `docs/migration-0.8-to-1.0.md` - the upgrade guide; its Checklist and Rollback sections are the
-  operator-facing counterpart of this manual. The file is still named
-  `docs/migration-0.8-to-0.9.md` in the tree and is renamed as part of the 1.0 documentation
-  cleanup.
+  operator-facing counterpart of this manual.
 - `docs/bundle-budget.md` - the frontend budget that `npm run size` enforces.
 - `SECURITY.md` - the supported version matrix and the dependency update policy per variant.

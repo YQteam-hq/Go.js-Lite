@@ -3,9 +3,9 @@
 > Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 > Project language policy: this file is **English only** starting from v0.3.1; Chinese is no longer maintained here.
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-10-17
 
-*The 0.9 line was cancelled; 1.0.0 absorbs every entry originally planned for 0.9.0.*
+*The 0.9 line was cancelled; 1.0.0 absorbs every entry originally planned for 0.9.0. This section aggregates the 72 pull requests merged since 0.8.1.*
 
 Hardening for uploads, sessions, response headers and backup archives, alongside frontend performance, offline and accessibility work. No surface is removed: the two deprecated surfaces below keep working and are scheduled for removal in 1.0.0.
 
@@ -15,6 +15,10 @@ Hardening for uploads, sessions, response headers and backup archives, alongside
 - Frontend: offline shell - a service worker, a web manifest and an offline fallback page keep the panel shell loading without a network. Push support is detected before it is used and every failure path returns a typed reason (`unsupported`, `insecure_context`, `no_service_worker`, `no_push_manager`, `permission_denied`, `subscribe_failed`, `no_application_server_key`), so the notification settings explain the state instead of rendering a broken control. The application server key is read from the environment and the service worker is only registered in production builds.
 - Frontend: a public `/status` page that keeps working without a session and degrades to the data it can read, with the overall verdict derived from the health summary and the disk usage, plus an accessible storage meter (`role="progressbar"` with `aria-valuetext`) that the disk analysis page reuses.
 - Frontend: a Cmd+K command palette driven by the same navigation model as the sidebar, a focus trap and an accessible name for the modal, and the navigation items moved into one data source.
+- Frontend: keyboard navigation for Tabs and DropdownMenu, `aria-invalid` / `aria-describedby` forwarded on Input, dialog semantics with focus management for the BottomSheet, a theme-aware Progress bar that announces the percentage, and an ErrorBoundary that reports caught errors and offers recovery.
+- Frontend: toast notifications pause their countdown on hover, cap the visible stack and announce errors with `role="alert"`.
+- Frontend: clipboard copy goes through a helper that works on insecure origins, and route changes scroll the page back to the top.
+- Tooling: per-variant build scripts (`build:panel` / `build:apache` / `build:ssh` / `build:docker`) and per-variant `.htaccess` templates.
 - Tests: the Vitest + jsdom foundation with a v8 coverage threshold of 70% statements, branches, functions and lines over `src/api/client.ts`, `src/hooks/useI18n.ts`, `src/i18n`, `src/lib`, `src/stores/authStore.ts` and `shared/version.ts`.
 - CI: the unit test, English-only and review gates are aggregated behind a single `Merge Gate` required status check, and a new `PHP 7.4 Compat Guard` job lints the production sources with PHP 7.4 itself and greps them for PHP 8-only syntax.
 - Docs: operator guides for [scheduled tasks](docs/scheduled-tasks.md), [two-factor authentication](docs/mfa.md) and the [database query builder](docs/database-query-builder.md), and the API reference now carries reference entries for most of the endpoints that shipped in 0.8.0 without one.
@@ -32,6 +36,8 @@ Hardening for uploads, sessions, response headers and backup archives, alongside
 
 ### Changed
 - Version: `version.json` is now the single source of truth. `api.php` and `tests/bootstrap.php` derive `VERSION` / `APP_VERSION` from it through `gojs_version()`, `shared/version.ts` imports it, and `package.json` / `package-lock.json` are kept in sync by `npm run version:bump` and verified by `npm run version:check`.
+- Frontend: the locale catalogues are split into per-namespace files for `en` and `zh` and the non-active locale is loaded on demand, `t()` honours the `defaultValue` option, and the table management screens are fully localised.
+- API client: rate-limit errors honour the `Retry-After` header.
 - `GET /api/bootstrap` returns a `deprecations` object with the full registry.
 - The removal schedule lives in `docs/deprecations.md`.
 - Dependencies: xterm is unified on the `@xterm/xterm@6` generation that the Web Shell actually imports, and the unused legacy v5 packages, `socket.io-client` and `react-hook-form` were removed.
