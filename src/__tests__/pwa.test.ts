@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   getPushSupport,
   getServiceWorkerContainer,
@@ -199,5 +201,25 @@ describe('urlBase64ToUint8Array', () => {
     expect(Array.from(urlBase64ToUint8Array('-_-_'))).toEqual(
       Array.from(urlBase64ToUint8Array('+/+/')),
     );
+  });
+});
+
+describe('service worker shell', () => {
+  const swSource = readFileSync(resolve(process.cwd(), 'public/sw.js'), 'utf8');
+
+  it('ships the offline fallback page next to the worker', () => {
+    expect(existsSync(resolve(process.cwd(), 'public/offline.html'))).toBe(true);
+  });
+
+  it('points the offline fallback at the offline page', () => {
+    expect(swSource).toContain("const OFFLINE_URL = './offline.html';");
+  });
+
+  it('precaches the offline fallback page in the shell', () => {
+    // A cold offline navigation falls back to OFFLINE_URL, so the page has to
+    // be part of the install-time shell instead of the plain-text reply.
+    const shellLine = swSource.split('\n').find((line) => line.startsWith('const SHELL_ASSETS'));
+    expect(shellLine).toBeDefined();
+    expect(shellLine).toContain('OFFLINE_URL');
   });
 });
