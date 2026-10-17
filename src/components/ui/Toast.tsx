@@ -1,32 +1,32 @@
-import { useEffect, useState } from 'react'
-import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react'
-import { useUiStore } from '@/stores/uiStore'
-import { useI18n } from '@/hooks/useI18n'
+import { useEffect, useState } from 'react';
+import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react';
+import { useUiStore } from '@/stores/uiStore';
+import { useI18n } from '@/hooks/useI18n';
 
 const icons = {
   success: CheckCircle2,
   error: XCircle,
   info: Info,
   warning: AlertTriangle,
-}
+};
 
 const colorClasses = {
   success: 'text-success',
   error: 'text-danger',
   info: 'text-accent',
   warning: 'text-warning',
-}
+};
 
 const bgClasses = {
   success: 'border-success/20',
   error: 'border-danger/20',
   info: 'border-accent/20',
   warning: 'border-warning/20',
-}
+};
 
 export function Toaster() {
-  const toasts = useUiStore((s) => s.toasts)
-  const removeToast = useUiStore((s) => s.removeToast)
+  const toasts = useUiStore(s => s.toasts);
+  const removeToast = useUiStore(s => s.removeToast);
 
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none px-4">
@@ -39,7 +39,7 @@ export function Toaster() {
         />
       ))}
     </div>
-  )
+  );
 }
 
 function ToastItem({
@@ -47,24 +47,31 @@ function ToastItem({
   index,
   onClose,
 }: {
-  toast: ReturnType<typeof useUiStore.getState>['toasts'][number]
-  index: number
-  onClose: () => void
+  toast: ReturnType<typeof useUiStore.getState>['toasts'][number];
+  index: number;
+  onClose: () => void;
 }) {
-  const Icon = icons[toast.type]
-  const [show, setShow] = useState(false)
-  const [leaving, setLeaving] = useState(false)
-  const { t } = useI18n()
+  const Icon = icons[toast.type];
+  const [show, setShow] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const { t } = useI18n();
+
+  // Error toasts report failures (auth, permission denied, request failed) and
+  // must interrupt the user, so they are announced assertively. Informational
+  // toasts are polite so they do not steal focus from the current task.
+  const assertive = toast.type === 'error';
+  const liveRegionRole = assertive ? 'alert' : 'status';
+  const liveRegionPoliteness = assertive ? 'assertive' : 'polite';
 
   useEffect(() => {
-    const timer = requestAnimationFrame(() => setShow(true))
-    return () => cancelAnimationFrame(timer)
-  }, [])
+    const timer = requestAnimationFrame(() => setShow(true));
+    return () => cancelAnimationFrame(timer);
+  }, []);
 
   const handleClose = () => {
-    setLeaving(true)
-    setTimeout(onClose, 300)
-  }
+    setLeaving(true);
+    setTimeout(onClose, 300);
+  };
 
   return (
     <div
@@ -79,14 +86,21 @@ function ToastItem({
         ${show && !leaving ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95'}
       `}
       style={{ animationDelay: `${index * 50}ms` }}
-      role="status"
+      role={liveRegionRole}
+      aria-live={liveRegionPoliteness}
+      aria-atomic="true"
     >
-      <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-        toast.type === 'success' ? 'bg-success/10' :
-        toast.type === 'error' ? 'bg-danger/10' :
-        toast.type === 'warning' ? 'bg-warning/10' :
-        'bg-accent/10'
-      }`}>
+      <div
+        className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+          toast.type === 'success'
+            ? 'bg-success/10'
+            : toast.type === 'error'
+              ? 'bg-danger/10'
+              : toast.type === 'warning'
+                ? 'bg-warning/10'
+                : 'bg-accent/10'
+        }`}
+      >
         <Icon size={18} className={colorClasses[toast.type]} />
       </div>
       <div className="flex-1 min-w-0 pt-0.5">
@@ -103,19 +117,19 @@ function ToastItem({
         <X size={16} />
       </button>
     </div>
-  )
+  );
 }
 
 export function toast(params: {
-  type?: 'success' | 'error' | 'info' | 'warning'
-  title: string
-  description?: string
-  duration?: number
+  type?: 'success' | 'error' | 'info' | 'warning';
+  title: string;
+  description?: string;
+  duration?: number;
 }) {
   return useUiStore.getState().addToast({
     type: params.type || 'info',
     title: params.title,
     description: params.description,
     duration: params.duration,
-  })
+  });
 }
