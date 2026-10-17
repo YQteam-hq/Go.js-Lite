@@ -37,16 +37,29 @@ function readConstants(source) {
   return constants
 }
 
-// Returns the shell list with every identifier replaced by its literal, or
-// an empty string when the worker declares no list at all.
-function readShellList(source, constants) {
+// Finds the single line that declares the shell list, or an empty string
+// when the worker declares none.
+function findShellList(source) {
   const line = source.split('\n').find((entry) => entry.startsWith(SHELL_ASSETS_PREFIX))
   if (!line) {
     failures.push(`${SW_FILE}: the SHELL_ASSETS list is missing`)
     return ''
   }
+  return line
+}
+
+// The shell list references OFFLINE_URL by name, so the identifier is
+// resolved to its literal before the quoted entries are read.
+function resolveIdentifiers(line, constants) {
   const offlineUrl = constants.get('OFFLINE_URL')
   return offlineUrl ? line.replaceAll('OFFLINE_URL', `'${offlineUrl}'`) : line
+}
+
+// './' and './index.html' are the document at the project root; every
+// other entry is copied from public/.
+function shellAssetFile(entry) {
+  const path = entry.replace(/^\.\//, '')
+  return path === '' || path === 'index.html' ? 'index.html' : join('public', path)
 }
 
 const swSource = readTextFile(SW_FILE)
@@ -57,7 +70,7 @@ if (swSource && !offlineUrl) {
   failures.push(`${SW_FILE}: the OFFLINE_URL constant is missing`)
 }
 
-const shellList = readShellList(swSource, constants)
+const shellList = resolveIdentifiers(findShellList(swSource), constants)
 if (offlineUrl && shellList && !shellList.includes(`'${offlineUrl}'`)) {
   failures.push(`${SW_FILE}: OFFLINE_URL "${offlineUrl}" is not part of SHELL_ASSETS`)
 }
@@ -68,10 +81,7 @@ if (swSource && entries.length === 0) {
 }
 
 for (const entry of entries) {
-  const path = entry.replace(/^\.\//, '')
-  // './' and './index.html' are the document at the project root; every
-  // other entry is copied from public/.
-  const file = path === '' || path === 'index.html' ? 'index.html' : join('public', path)
+  const file = shellAssetFile(entry)
   if (!existsSync(join(root, file))) {
     failures.push(`${SW_FILE}: SHELL_ASSETS entry "${entry}" has no file at ${file}`)
   }
