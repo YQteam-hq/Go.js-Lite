@@ -1,11 +1,16 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import { memo, type HTMLAttributes, type ReactNode } from 'react'
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: 'accent' | 'success' | 'danger' | 'warning' | 'muted'
   children: ReactNode
 }
 
-export function Badge({ variant = 'muted', className = '', children, ...props }: BadgeProps) {
+export const Badge = memo(function Badge({
+  variant = 'muted',
+  className = '',
+  children,
+  ...props
+}: BadgeProps) {
   const variants = {
     accent: 'badge-accent',
     success: 'badge-success',
@@ -19,4 +24,4 @@ export function Badge({ variant = 'muted', className = '', children, ...props }:
       {children}
     </span>
   )
-}
+})

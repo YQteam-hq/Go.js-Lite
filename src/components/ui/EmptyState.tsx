@@ -1,12 +1,5 @@
-import type { ReactNode } from 'react'
-import {
-  FolderOpen,
-  Search,
-  Database,
-  AlertCircle,
-  FileText,
-  Package,
-} from 'lucide-react'
+import { memo, type ReactNode } from 'react'
+import { FolderOpen, Search, Database, AlertCircle, FileText, Package } from 'lucide-react'
 import { Button } from './Button'
 import { useI18n } from '@/hooks/useI18n'
 
@@ -23,7 +16,7 @@ interface EmptyStateProps {
   className?: string
 }
 
-export function EmptyState({
+export const EmptyState = memo(function EmptyState({
   icon,
   title,
   description,
@@ -40,9 +33,7 @@ export function EmptyState({
     <div className={`py-12 px-4 text-center ${className}`}>
       <div className="mx-auto mb-4">{icon || defaultIcon}</div>
       <p className="text-sm font-medium text-fg mb-1">{title}</p>
-      {description && (
-        <p className="text-xs text-fg-subtle max-w-xs mx-auto">{description}</p>
-      )}
+      {description && <p className="text-xs text-fg-subtle max-w-xs mx-auto">{description}</p>}
       {action && (
         <Button
           variant={action.variant || 'secondary'}
@@ -56,14 +47,9 @@ export function EmptyState({
       )}
     </div>
   )
-}
+})
 
-interface EmptyFolderProps {
-  onUpload?: () => void
-  className?: string
-}
-
-export function EmptyFolder({ onUpload, className = '' }: EmptyFolderProps) {
+export const EmptyFolder = memo(function EmptyFolder({ onUpload, className = '' }: { onUpload?: () => void; className?: string }) {
   const { t } = useI18n()
 
   return (
@@ -88,14 +74,9 @@ export function EmptyFolder({ onUpload, className = '' }: EmptyFolderProps) {
       }
     />
   )
-}
+})
 
-interface EmptySearchProps {
-  query?: string
-  className?: string
-}
-
-export function EmptySearch({ query, className = '' }: EmptySearchProps) {
+export const EmptySearch = memo(function EmptySearch({ query, className = '' }: { query?: string; className?: string }) {
   const { t } = useI18n()
 
   return (
@@ -110,14 +91,9 @@ export function EmptySearch({ query, className = '' }: EmptySearchProps) {
       description={query ? `「${query}」${t('files.noResultsHint')}` : t('files.noResultsHint')}
     />
   )
-}
+})
 
-interface EmptyDatabaseProps {
-  onAdd?: () => void
-  className?: string
-}
-
-export function EmptyDatabase({ onAdd, className = '' }: EmptyDatabaseProps) {
+export const EmptyDatabase = memo(function EmptyDatabase({ onAdd, className = '' }: { onAdd?: () => void; className?: string }) {
   const { t } = useI18n()
 
   return (
@@ -142,15 +118,9 @@ export function EmptyDatabase({ onAdd, className = '' }: EmptyDatabaseProps) {
       }
     />
   )
-}
+})
 
-interface EmptyErrorProps {
-  error?: string
-  onRetry?: () => void
-  className?: string
-}
-
-export function EmptyError({ error, onRetry, className = '' }: EmptyErrorProps) {
+export const EmptyError = memo(function EmptyError({ error, onRetry, className = '' }: { error?: string; onRetry?: () => void; className?: string }) {
   const { t } = useI18n()
 
   return (
@@ -175,16 +145,14 @@ export function EmptyError({ error, onRetry, className = '' }: EmptyErrorProps) 
       }
     />
   )
-}
+})
 
-interface EmptyDataProps {
+export const EmptyData = memo(function EmptyData({ icon, title, description, className = '' }: {
   icon?: ReactNode
   title: string
   description?: string
   className?: string
-}
-
-export function EmptyData({ icon, title, description, className = '' }: EmptyDataProps) {
+}) {
   return (
     <EmptyState
       className={className}
@@ -199,4 +167,4 @@ export function EmptyData({ icon, title, description, className = '' }: EmptyDat
       description={description}
     />
   )
-}
+})
