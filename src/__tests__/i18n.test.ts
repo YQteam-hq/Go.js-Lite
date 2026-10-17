@@ -134,6 +134,23 @@ describe('useI18n', () => {
     );
   });
 
+  it('keeps applying the defaultValue after a language switch', () => {
+    const { result } = renderHook(() => useSubject());
+    expect(result.current.t('common.doesNotExist', { defaultValue: 'Fallback text' })).toBe(
+      'Fallback text'
+    );
+
+    act(() => {
+      useUiStore.setState({ language: 'en' });
+    });
+    // The fallback is language independent, while a key that exists in the
+    // new catalogue still wins over the default.
+    expect(result.current.t('common.doesNotExist', { defaultValue: 'Fallback text' })).toBe(
+      'Fallback text'
+    );
+    expect(result.current.t('common.save', { defaultValue: 'Fallback text' })).toBe(en.common.save);
+  });
+
   it('interpolates named params', () => {
     const { result } = renderHook(() => useSubject());
     expect(result.current.t('common.minutesAgo', { count: 5 })).toBe(
